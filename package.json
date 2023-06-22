@@ -1,6 +1,6 @@
 {
   "name": "wrike-ist",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "description": "GitHub Action for Wrike automation",
   "main": "resources/main.js",
   "scripts": {
@@ -14,10 +14,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/valerauko/wrike-ist"
+    "url": "git+https://github.com/rapyuta-robotics/wrike-ist"
   },
   "keywords": [
-    "wrike", "task management", "automation", "pull requests", "issues", "github"
+    "wrike",
+    "task management",
+    "automation",
+    "pull requests",
+    "issues",
+    "github"
   ],
   "author": "Balint Erdos <valerauko@gmail.com>",
   "license": "AGPL-3.0-or-later",

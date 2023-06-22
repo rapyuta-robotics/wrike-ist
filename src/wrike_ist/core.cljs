@@ -18,14 +18,16 @@
                     :else :open)
             url ^String (.-html_url pr-obj)
             title ^String (.-title pr-obj)
-            id ^long (.-number pr-obj)]
+            id ^long (.-number pr-obj)
+            target-branch ^String (-> pr-obj (.-base) (.-ref))]
         (map
          (fn [permalink]
            {:state state
             :permalink permalink
             :pr-url url
             :id id
-            :title title})
+            :title title
+            :target-branch target-branch})
          links)))))
 
 (defn main

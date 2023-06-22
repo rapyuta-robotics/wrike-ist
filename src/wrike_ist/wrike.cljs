@@ -14,14 +14,14 @@
   (str "<span "
        "style=\"background-color: rgb(255,204,128); color: rgb(25,25,25);\" "
        "contenteditable=\"false\">"
-       "Pull request:"
+       "Pull request for "
        "</span> "))
 
 (defn link-html
-  [{:keys [id pr-url title]}]
+  [{:keys [id pr-url target-branch title]}]
   (if (empty? title)
-    (str link-badge pr-url)
-    (str link-badge "<a href=\"" pr-url "\">" title " (#" id ")""</a>")))
+    (str link-badge target-branch ": " "<a href=\"" pr-url "\">" " (#" id ")</a>")
+    (str link-badge target-branch ": " "<a href=\"" pr-url "\">" title " (#" id ")</a>")))
 
 (defn parse-body
   [response]
