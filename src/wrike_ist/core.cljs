@@ -19,7 +19,8 @@
             url ^String (.-html_url pr-obj)
             title ^String (.-title pr-obj)
             id ^long (.-number pr-obj)
-            target-branch ^String (-> pr-obj (.-base) (.-ref))]
+            target-branch ^String (-> pr-obj (.-base) (.-ref))
+            repository-name (-> pr-obj (.-head) (.-repo) (.-name))]
         (map
          (fn [permalink]
            {:state state
@@ -27,7 +28,8 @@
             :pr-url url
             :id id
             :title title
-            :target-branch target-branch})
+            :target-branch target-branch
+            :repository-name repository-name})
          links)))))
 
 (defn main

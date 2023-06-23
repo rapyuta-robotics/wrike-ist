@@ -18,10 +18,10 @@
        "</span> "))
 
 (defn link-html
-  [{:keys [id pr-url target-branch title]}]
+  [{:keys [id pr-url target-branch repository-name title]}]
   (if (empty? title)
     (str link-badge target-branch ": " "<a href=\"" pr-url "\">" " (#" id ")</a>")
-    (str link-badge target-branch ": " "<a href=\"" pr-url "\">" title " (#" id ")</a>")))
+    (str link-badge repository-name " on branch " target-branch ": " "<a href=\"" pr-url "\">" title " (#" id ")</a>")))
 
 (defn parse-body
   [response]
