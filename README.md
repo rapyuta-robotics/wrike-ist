@@ -52,7 +52,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: valerauko/wrike-ist@v1
+      - uses: rapyuta-robotics/wrike-ist@main
         env:
           WRIKE_TOKEN: ${{ secrets.WRIKE_TOKEN }}
 ```
