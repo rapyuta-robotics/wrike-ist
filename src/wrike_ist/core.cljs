@@ -19,8 +19,8 @@
             url ^String (.-html_url pr-obj)
             title ^String (.-title pr-obj)
             id ^long (.-number pr-obj)
-            target-branch ^String (-> pr-obj (.-base) (.-ref))
-            repository-name (-> pr-obj (.-head) (.-repo) (.-name))]
+            target-branch ^String (-> pr-obj ^String (.-base) ^String (.-ref))
+            repository-name ^String (-> pr-obj ^String (.-head) ^String (.-repo) ^String (.-name))]
         (map
          (fn [permalink]
            {:state state
@@ -40,18 +40,25 @@
         (when-let [{:keys [state] :as details} (first links)]
           (-> (case state
                 :draft
-                (wrike/link-pr details)
+                (js/Promise.all
+                 [(wrike/check-valid-task details)
+                  (wrike/link-pr details)])
 
                 :open
                 (js/Promise.all
-                 [(wrike/link-pr details)
+                 [(wrike/check-valid-task details)
+                  (wrike/link-pr details)
                   (wrike/progress-task details (core/getInput "opened"))])
 
                 :merged
-                (wrike/complete-task details (core/getInput "merged"))
+                (js/Promise.all
+                [(wrike/check-valid-task details)
+                 (wrike/complete-task details (core/getInput "merged"))])
 
                 :closed
-                (wrike/cancel-task details (core/getInput "closed"))
+                (js/Promise.all
+                [(wrike/check-valid-task details)
+                 (wrike/cancel-task details (core/getInput "closed"))])
 
                 ;; else ignore
                 (js/Promise.resolve))

@@ -1,5 +1,6 @@
 (ns wrike-ist.wrike
-  (:require [httpurr.client.node :as http]))
+  (:require [httpurr.client.node :as http]
+            [clojure.string :as str]))
 
 (defn- wrike-token
   []
@@ -9,6 +10,8 @@
   []
   {:Authorization (str "bearer " (wrike-token))
    :Content-Type "application/json"})
+
+(def folder-names "98_issues 02_sootballs_releases")
 
 (def link-badge
   (str "<span "
@@ -38,6 +41,57 @@
          (js/Promise.resolve task)
          (js/Promise.reject (js/Error. "Task not found")))))))
 
+(defn get-folder-id
+  [folder-names]
+  (let [uri (str "https://www.wrike.com/api/v4/folders")]
+    (-> (http/get uri {:headers (headers)})
+        (.then parse-body)
+        (.then (fn [{folders "data"}]
+                 (let [folder-names (clojure.string/split folder-names #"\s+")
+                       matching-folders (filter #(contains? folder-names (:title %)) folders)]
+                   (if (seq matching-folders)
+                     (map :id matching-folders)
+                     [])))))))
+
+(defn fetch-wrike-task [task-id]
+  (let [task-url (str "https://www.wrike.com/api/v4/tasks/" task-id)
+        headers {:headers (headers)}
+        response (-> (http/get task-url headers)
+                     parse-body)]
+    (if (= 200 (:status response))
+      response
+      nil)))
+
+(defn is-wrike-task-in-folder? [permalink folder-id]
+  (find-task permalink)
+  (fn [{:strs [task-id]}]
+    (let [uri (str "https://www.wrike.com/api/v4/tasks/" task-id)]
+      (-> (http/get uri {:headers (headers)})
+          (.then parse-body)
+          (.then (fn [task]
+                  (if (contains? (:folders task) folder-id)
+                    (do
+                        (js/console.log "Task is in the folder or an inherited folder: true")
+                        true)
+                    (if-let [parent-id (:parentIds task)]
+                        (do
+                          (js/console.log "Task is in the folder or an inherited folder: true")
+                          (some #(contains? (:folders (fetch-wrike-task %)) folder-id) parent-id))
+                        (do
+                          (js/console.log "Task is not in the folder or an inherited folder: false")
+                          false)))))))))
+
+
+(defn check-valid-task
+  [{:keys [permalink target-branch folder-names]}]
+  (when (and target-branch (str/starts-with? target-branch "release"))
+    (let [folder-ids (get-folder-id folder-names)]
+      (if (seq folder-ids)
+        (if (is-wrike-task-in-folder? permalink (first folder-ids))
+          (js/Promise.resolve permalink)
+          (js/Promise.reject (js/Error. "Task not found")))
+        (js/Promise.reject (js/Error. "No matching folder found"))))))
+
 (defn link-pr
   [{:keys [pr-url permalink] :as details}]
   (.then
@@ -45,6 +99,7 @@
    (fn [{:strs [id]}]
      (let [uri (str "https://www.wrike.com/api/v4/tasks/" id "/comments")]
        (-> (http/get uri {:headers (headers)})
+            
            (.then (fn find-existing-link [response]
                     (reduce
                      (fn [ok comment]

@@ -30,42 +30,62 @@
   (testing "Extract link from payload"
     (testing "One link"
       (let [url "https://www.wrike.com/open.htm?id=1"
-            payload (clj->js {:body (str "a\n" url "\nb")})]
+            payload (clj->js {:body (str "a\n" url "\nb")
+                              :base (clj->js {:ref "feature-branch"})
+                              :head (clj->js {:repo (clj->js {:name "your-repo-name"})})})]
         (is (= url (:permalink (first (extract-details payload)))))))
     (testing "Multiple links"
       (let [url-1 "https://www.wrike.com/open.htm?id=1"
             url-2 "https://www.wrike.com/open.htm?id=2"
-            payload (clj->js {:body (str "a\n" url-1 "\nb " url-2)})]
+            payload (clj->js {:body (str "a\n" url-1 "\nb " url-2)
+                              :base (clj->js {:ref "feature-branch"})
+                              :head (clj->js {:repo (clj->js {:name "your-repo-name"})})})]
         (is (= url-1 (:permalink (first (extract-details payload)))))
         (is (= url-2 (:permalink (second (extract-details payload))))))))
   (testing "Extract pull request URL from payload"
     (let [url "https://github.com/valerauko/wrike-ist/pull/9001"
           payload (clj->js {:body "https://www.wrike.com/open.htm?id=1"
-                            :html_url url})]
+                            :html_url url
+                            :base (clj->js {:ref "feature-branch"})
+                            :head (clj->js {:repo (clj->js {:name "your-repo-name"})})})]
       (is (= url (:pr-url (first (extract-details payload)))))))
   (testing "Extract pull request title from payload"
     (let [title "hoge"
           payload (clj->js {:body "https://www.wrike.com/open.htm?id=1"
-                            :title title})]
+                            :title title
+                            :base (clj->js {:ref "feature-branch"})
+                            :head (clj->js {:repo (clj->js {:name "your-repo-name"})})})]
       (is (= title (:title (first (extract-details payload)))))))
   (testing "Translating pull request state"
     (let [payload (clj->js {:body "https://www.wrike.com/open.htm?id=1"
                             :merged true
-                            :state "closed"})]
+                            :state "closed"
+                            :base (clj->js {:ref "feature-branch"})
+                            :head (clj->js {:repo (clj->js {:name "your-repo-name"})})})]
       (is (= :merged (:state (first (extract-details payload))))))
     (let [payload (clj->js {:body "https://www.wrike.com/open.htm?id=1"
-                            :merged true})]
+                            :merged true
+                            :base (clj->js {:ref "feature-branch"})
+                            :head (clj->js {:repo (clj->js {:name "your-repo-name"})})})]
       (is (= :merged (:state (first (extract-details payload))))))
     (let [payload (clj->js {:body "https://www.wrike.com/open.htm?id=1"
                             :merged false
-                            :state "closed"})]
+                            :state "closed"
+                            :base (clj->js {:ref "feature-branch"})
+                            :head (clj->js {:repo (clj->js {:name "your-repo-name"})})})]
       (is (= :closed (:state (first (extract-details payload))))))
     (let [payload (clj->js {:body "https://www.wrike.com/open.htm?id=1"
-                            :state "closed"})]
+                            :state "closed"
+                            :base (clj->js {:ref "feature-branch"})
+                            :head (clj->js {:repo (clj->js {:name "your-repo-name"})})})]
       (is (= :closed (:state (first (extract-details payload))))))
     (let [payload (clj->js {:body "https://www.wrike.com/open.htm?id=1"
                             :merged false
-                            :state "open"})]
+                            :state "open"
+                            :base (clj->js {:ref "feature-branch"})
+                            :head (clj->js {:repo (clj->js {:name "your-repo-name"})})})]
       (is (= :open (:state (first (extract-details payload))))))
-    (let [payload (clj->js {:body "https://www.wrike.com/open.htm?id=1"})]
+    (let [payload (clj->js {:body "https://www.wrike.com/open.htm?id=1"
+                            :base (clj->js {:ref "feature-branch"})
+                            :head (clj->js {:repo (clj->js {:name "your-repo-name"})})})]
       (is (= :open (:state (first (extract-details payload))))))))
