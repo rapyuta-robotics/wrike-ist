@@ -79,11 +79,17 @@
 (defn fetch-folder-details [folder-id]
   (let [uri (str "https://www.wrike.com/api/v4/folders/" folder-id)]
     (-> (http/get uri {:headers (headers)})
-        (.then parse-body))))
+        (.then parse-body)
+        (.then (fn [response]
+                 (let [title (-> response
+                                (get-in ["data" 0 "title"]))]
+                   (.info js/console (str "Folder title: " title))
+                   response))))))
 
 (defn is-wrike-task-in-folder? [permalink]
   (find-task permalink)
   (fn [{:strs [task-id]}]
+    (.info js/console "is-wrike-task-in-folder?: Start of the function")
     (let [uri (str "https://www.wrike.com/api/v4/tasks/" task-id)]
       (-> (http/get uri {:headers (headers)})
           (.then parse-body)
@@ -94,6 +100,7 @@
                                                 (for [parent-id parent-ids
                                                       :let [folder-details (fetch-folder-details parent-id)]]
                                                   folder-details))]
+                    (.info js/console (str "is-wrike-task-in-folder?: parent IDs for folders found: " parent-ids))
                     (if (seq matching-folders)
                       (do
                         (.info js/console (str "is-wrike-task-in-folder?: Matching folders found: " matching-folders))
