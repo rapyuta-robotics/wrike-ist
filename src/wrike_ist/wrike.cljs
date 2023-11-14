@@ -76,24 +76,32 @@
       response
       nil)))
 
-(defn is-wrike-task-in-folder? [permalink folder-id]
+(defn fetch-folder-details [folder-id]
+  (let [uri (str "https://www.wrike.com/api/v4/folders/" folder-id)]
+    (-> (http/get uri {:headers (headers)})
+        (.then parse-body))))
+
+(defn is-wrike-task-in-folder? [permalink]
   (find-task permalink)
   (fn [{:strs [task-id]}]
     (let [uri (str "https://www.wrike.com/api/v4/tasks/" task-id)]
       (-> (http/get uri {:headers (headers)})
           (.then parse-body)
           (.then (fn [task]
-                  (if (contains? (:folders task) folder-id)
-                    (do
-                        (.log js/console (str  "is-wrike-task-in-folder?: Task is in the folder or an inherited folder: true"))
+                  (let [parent-ids (concat (:parentIds task) (:superParentIds task))
+                        folder-names folder-names
+                        matching-folders (filter #(contains? folder-names (get % "title"))
+                                                (for [parent-id parent-ids
+                                                      :let [folder-details (fetch-folder-details parent-id)]]
+                                                  folder-details))]
+                    (if (seq matching-folders)
+                      (do
+                        (.info js/console (str "is-wrike-task-in-folder?: Matching folders found: " matching-folders))
                         true)
-                    (if-let [parent-id (:parentIds task)]
-                        (do
-                          (.log js/console (str  "is-wrike-task-in-folder?: Task is in the folder or an inherited folder: true"))
-                          (some #(contains? (:folders (fetch-wrike-task %)) folder-id) parent-id))
-                        (do
-                          (.log js/console (str  "is-wrike-task-in-folder?: Task is not in the folder or an inherited folder: false"))
-                          false)))))))))
+                      (do
+                        (.info js/console "is-wrike-task-in-folder?: No matching folders found")
+                        false)))))))))
+
 
 
 (defn log-folder-ids
@@ -107,20 +115,13 @@
    (fn [resolve reject]
      (.info js/console "check-valid-task: Start of the function")
      (when (and target-branch (str/starts-with? target-branch "main"))
-       (let [folder-ids (get-folder-id folder-names)]
-         (if (seq folder-ids)
-           (do
-             (log-folder-ids folder-names folder-ids)
-             (if (is-wrike-task-in-folder? permalink (first folder-ids))
+             (if (is-wrike-task-in-folder? permalink)
                (do
                  (.info js/console "check-valid-task: Task is in the folder or an inherited folder: true")
                  (resolve permalink))
                (do
-                 (.error js/console "check-valid-task: Task not found")
-                 (reject (js/Error. "Task not found")))))
-           (do
-             (.error js/console "check-valid-task: No matching folder found")
-             (reject (js/Error. "No matching folder found")))))))))
+                 (.error js/console "check-valid-task: Task not found in folder")
+                 (reject (js/Error. "check-valid-task: Task not found in folder"))))))))
 
 
 
