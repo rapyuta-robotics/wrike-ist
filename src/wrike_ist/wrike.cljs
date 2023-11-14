@@ -86,21 +86,31 @@
                           false)))))))))
 
 
+(defn log-folder-ids
+  [folder-names folder-ids]
+  (doseq [pair (map vector folder-names folder-ids)]
+    (.log js/console (str "Folder Name: " (first pair) ", Folder ID: " (second pair)))))
+
 (defn check-valid-task
   [{:keys [permalink target-branch folder-names]}]
-  (when (and target-branch (str/starts-with? target-branch "main"))
-    (let [folder-ids (get-folder-id folder-names)]
-      (if (seq folder-ids)
-        (if (is-wrike-task-in-folder? permalink (first folder-ids))
+    (.info js/console "check-valid-task: Start of the function")
+    (when (and target-branch (str/starts-with? target-branch "main"))
+      (let [folder-ids (get-folder-id folder-names)]
+        (if (seq folder-ids)
           (do
-            (.info js/console "check-valid-task: Task is in the folder or an inherited folder: true")
-            (js/Promise.resolve permalink))
+            (log-folder-ids folder-names folder-ids)
+            (if (is-wrike-task-in-folder? permalink (first folder-ids))
+              (do
+                (.info js/console "check-valid-task: Task is in the folder or an inherited folder: true")
+                (js/Promise.resolve permalink))
+              (do
+                (.error js/console "check-valid-task: Task not found")
+                (js/Promise.reject (js/Error. "Task not found")))))
           (do
-            (.error js/console "check-valid-task: Task not found")
-            (js/Promise.reject (js/Error. "Task not found"))))
-        (do
-          (.error js/console "check-valid-task: No matching folder found")
-          (js/Promise.reject (js/Error. "check-valid-task: No matching folder found")))))))
+            (.error js/console "check-valid-task: No matching folder found")
+            (js/Promise.reject (js/Error. "No matching folder found")))))))
+
+
 
 (defn link-pr
   [{:keys [pr-url permalink] :as details}]
