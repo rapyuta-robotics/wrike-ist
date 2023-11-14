@@ -50,20 +50,23 @@
   (let [uri (str "https://www.wrike.com/api/v4/folders")]
     (-> (http/get uri {:headers (headers)})
         (.then parse-body)
-        (.then (fn [{:keys [data]}]
+        (.then (fn [response]
                  (let [folder-names (clojure.string/split folder-names #"\s+")]
                    (.info js/console (str "get-folder-id: Querying for folder names: " folder-names))
-                   (let [matching-folder-ids (->> data
-                                                (mapcat #(get % :children))
-                                                (filter #(contains? folder-names (get % :title)))
-                                                (map :id))]
-                     (if (seq matching-folder-ids)
-                       (do
-                         (.info js/console (str "get-folder-id: Matching folder IDs found: " matching-folder-ids))
-                         matching-folder-ids)
-                       (do
-                         (.info js/console "get-folder-id: No matching folder IDs found")
-                         [])))))))))
+                   (let [data (get response "data" [])
+                         matching-folder-ids (->> data
+                                                  (mapcat #(get % "children"))
+                                                  (filter #(contains? folder-names (get % "title")))
+                                                  (map #(get % "id")))]
+                       (.info js/console (str "get-folder-id: Data object: " data))
+                       (if (seq matching-folder-ids)
+                         (do
+                           (.info js/console (str "get-folder-id: Matching folder IDs found: " matching-folder-ids))
+                           matching-folder-ids)
+                         (do
+                           (.info js/console "get-folder-id: No matching folder IDs found")
+                           [])))))))))
+
 
 (defn fetch-wrike-task [task-id]
   (let [task-url (str "https://www.wrike.com/api/v4/tasks/" task-id)
