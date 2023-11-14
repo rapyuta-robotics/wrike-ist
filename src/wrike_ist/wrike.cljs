@@ -54,8 +54,12 @@
                  (let [folder-names (clojure.string/split folder-names #"\s+")
                        matching-folders (filter #(contains? folder-names (:title %)) folders)]
                    (if (seq matching-folders)
-                     (map :id matching-folders)
-                     [])))))))
+                     (do
+                       (.info js/console (str "get-folder-id: Matching folders found: " matching-folders))
+                       (map :id matching-folders))
+                     (do
+                       (.info js/console "get-folder-id: No matching folders found")
+                       []))))))))
 
 (defn fetch-wrike-task [task-id]
   (let [task-url (str "https://www.wrike.com/api/v4/tasks/" task-id)
