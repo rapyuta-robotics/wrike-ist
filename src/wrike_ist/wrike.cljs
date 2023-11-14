@@ -50,16 +50,20 @@
   (let [uri (str "https://www.wrike.com/api/v4/folders")]
     (-> (http/get uri {:headers (headers)})
         (.then parse-body)
-        (.then (fn [{folders "data"}]
-                 (let [folder-names (clojure.string/split folder-names #"\s+")
-                       matching-folders (filter #(contains? folder-names (:title %)) folders)]
-                   (if (seq matching-folders)
-                     (do
-                       (.info js/console (str "get-folder-id: Matching folders found: " matching-folders))
-                       (map :id matching-folders))
-                     (do
-                       (.info js/console "get-folder-id: No matching folders found")
-                       []))))))))
+        (.then (fn [{:keys [data]}]
+                 (let [folder-names (clojure.string/split folder-names #"\s+")]
+                   (.info js/console (str "get-folder-id: Querying for folder names: " folder-names))
+                   (let [matching-folder-ids (->> data
+                                                (mapcat #(get % :children))
+                                                (filter #(contains? folder-names (get % :title)))
+                                                (map :id))]
+                     (if (seq matching-folder-ids)
+                       (do
+                         (.info js/console (str "get-folder-id: Matching folder IDs found: " matching-folder-ids))
+                         matching-folder-ids)
+                       (do
+                         (.info js/console "get-folder-id: No matching folder IDs found")
+                         [])))))))))
 
 (defn fetch-wrike-task [task-id]
   (let [task-url (str "https://www.wrike.com/api/v4/tasks/" task-id)
