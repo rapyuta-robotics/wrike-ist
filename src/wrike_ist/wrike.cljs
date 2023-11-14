@@ -88,7 +88,7 @@
 
 (defn check-valid-task
   [{:keys [permalink target-branch folder-names]}]
-  (when (and target-branch (str/starts-with? target-branch "ayush/"))
+  (when (and target-branch (str/starts-with? target-branch "main"))
     (let [folder-ids (get-folder-id folder-names)]
       (if (seq folder-ids)
         (if (is-wrike-task-in-folder? permalink (first folder-ids))
