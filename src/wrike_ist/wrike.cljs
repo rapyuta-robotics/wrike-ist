@@ -100,7 +100,7 @@
     (.log js/console (str "Folder Name: " (first pair) ", Folder ID: " (second pair)))))
 
 (defn check-valid-task
-  [{:keys [permalink target-branch folder-names]}]
+  [{:keys [permalink target-branch]}]
   (js/Promise.
    (fn [resolve reject]
      (.info js/console "check-valid-task: Start of the function")
