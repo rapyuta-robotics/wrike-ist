@@ -1,6 +1,7 @@
 (ns wrike-ist.wrike
   (:require [httpurr.client.node :as http]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            ["@actions/core" :as actionsCore]))
 
 (defn- wrike-token
   []
@@ -39,6 +40,7 @@
      (fn [response]
        (if-let [task (get-in (parse-body response) ["data" 0])]
          (js/Promise.resolve task)
+         (.error js/console "Task not found")
          (js/Promise.reject (js/Error. "Task not found")))))))
 
 (defn get-folder-id
@@ -71,14 +73,14 @@
           (.then (fn [task]
                   (if (contains? (:folders task) folder-id)
                     (do
-                        (js/console.log "Task is in the folder or an inherited folder: true")
+                        (.log js/console (str  "Task is in the folder or an inherited folder: true"))
                         true)
                     (if-let [parent-id (:parentIds task)]
                         (do
-                          (js/console.log "Task is in the folder or an inherited folder: true")
+                          (.log js/console (str  "Task is in the folder or an inherited folder: true"))
                           (some #(contains? (:folders (fetch-wrike-task %)) folder-id) parent-id))
                         (do
-                          (js/console.log "Task is not in the folder or an inherited folder: false")
+                          (.log js/console (str  "Task is not in the folder or an inherited folder: false"))
                           false)))))))))
 
 
@@ -89,7 +91,9 @@
       (if (seq folder-ids)
         (if (is-wrike-task-in-folder? permalink (first folder-ids))
           (js/Promise.resolve permalink)
+          (.error js/console "Task not found")
           (js/Promise.reject (js/Error. "Task not found")))
+        (.error js/console "No matching folder found")
         (js/Promise.reject (js/Error. "No matching folder found"))))))
 
 (defn link-pr
@@ -114,9 +118,9 @@
                                            :plainText false})]
                       (http/post uri {:headers (headers)
                                       :body (js/JSON.stringify params)}))))
-           (.then #(js/console.log "PR link sent to task"))
+           (.then #(.log js/console (str  "PR link sent to task")))
            (.catch #(if (= % :present)
-                      (js/console.log "PR link already in comments")
+                      (.log js/console (str  "PR link already in comments"))
                       (js/Promise.reject %))))))))
 
 (defn folder-statuses
@@ -190,7 +194,7 @@
      (find-task permalink)
      #(update-task-status % {:wanted-status wanted-status
                              :wanted-group "Completed"}))
-    (js/console.log "Skipping `merged` transition because it's set to \"-\"")))
+    (.log js/console (str  "Skipping `merged` transition because it's set to \"-\""))))
 
 (defn cancel-task
   [{:keys [permalink]} wanted-status]
@@ -199,4 +203,4 @@
      (find-task permalink)
      #(update-task-status % {:wanted-status wanted-status
                              :wanted-group "Cancelled"}))
-    (js/console.log "Skipping `closed` transition because it's set to \"-\"")))
+    (.log js/console (str  "Skipping `closed` transition because it's set to \"-\""))))
