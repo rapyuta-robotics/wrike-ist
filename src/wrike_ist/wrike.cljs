@@ -39,11 +39,11 @@
      (fn [response]
        (if-let [task (get-in (parse-body response) ["data" 0])]
          (do
-           (.info js/console "Task found")
+           (.info js/console "find-task: Task found")
            (js/Promise.resolve task))
          (do
-           (.error js/console "Task not found")
-           (js/Promise.reject (js/Error. "Task not found"))))))))
+           (.error js/console "find-task: Task not found")
+           (js/Promise.reject (js/Error. "find-task: Task not found"))))))))
 
 (defn get-folder-id
   [folder-names]
@@ -75,14 +75,14 @@
           (.then (fn [task]
                   (if (contains? (:folders task) folder-id)
                     (do
-                        (.log js/console (str  "Task is in the folder or an inherited folder: true"))
+                        (.log js/console (str  "is-wrike-task-in-folder?: Task is in the folder or an inherited folder: true"))
                         true)
                     (if-let [parent-id (:parentIds task)]
                         (do
-                          (.log js/console (str  "Task is in the folder or an inherited folder: true"))
+                          (.log js/console (str  "is-wrike-task-in-folder?: Task is in the folder or an inherited folder: true"))
                           (some #(contains? (:folders (fetch-wrike-task %)) folder-id) parent-id))
                         (do
-                          (.log js/console (str  "Task is not in the folder or an inherited folder: false"))
+                          (.log js/console (str  "is-wrike-task-in-folder?: Task is not in the folder or an inherited folder: false"))
                           false)))))))))
 
 
@@ -93,14 +93,14 @@
       (if (seq folder-ids)
         (if (is-wrike-task-in-folder? permalink (first folder-ids))
           (do
-            (.info js/console "Task is in the folder or an inherited folder: true")
+            (.info js/console "check-valid-task: Task is in the folder or an inherited folder: true")
             (js/Promise.resolve permalink))
           (do
-            (.error js/console "Task not found")
+            (.error js/console "check-valid-task: Task not found")
             (js/Promise.reject (js/Error. "Task not found"))))
         (do
-          (.error js/console "No matching folder found")
-          (js/Promise.reject (js/Error. "No matching folder found")))))))
+          (.error js/console "check-valid-task: No matching folder found")
+          (js/Promise.reject (js/Error. "check-valid-task: No matching folder found")))))))
 
 (defn link-pr
   [{:keys [pr-url permalink] :as details}]
@@ -124,9 +124,9 @@
                                            :plainText false})]
                       (http/post uri {:headers (headers)
                                       :body (js/JSON.stringify params)}))))
-           (.then #(.log js/console (str  "PR link sent to task")))
+           (.then #(.log js/console (str  "link-pr: PR link sent to task")))
            (.catch #(if (= % :present)
-                      (.log js/console (str  "PR link already in comments"))
+                      (.log js/console (str  "link-pr: PR link already in comments"))
                       (js/Promise.reject %))))))))
 
 (defn folder-statuses
@@ -174,7 +174,7 @@
    (fn [statuses]
      (if-let [match (find-status statuses opts)]
        match
-       (js/Promise.reject (str "No appropriate status found" opts))))))
+       (js/Promise.reject (str "next-status: No appropriate status found" opts))))))
 
 (defn update-task-status
   [{task-id "id" [folder-id] "parentIds"} wanted]
@@ -200,7 +200,7 @@
      (find-task permalink)
      #(update-task-status % {:wanted-status wanted-status
                              :wanted-group "Completed"}))
-    (.log js/console (str  "Skipping `merged` transition because it's set to \"-\""))))
+    (.log js/console (str  "complete-task: Skipping `merged` transition because it's set to \"-\""))))
 
 (defn cancel-task
   [{:keys [permalink]} wanted-status]
@@ -209,4 +209,4 @@
      (find-task permalink)
      #(update-task-status % {:wanted-status wanted-status
                              :wanted-group "Cancelled"}))
-    (.log js/console (str  "Skipping `closed` transition because it's set to \"-\""))))
+    (.log js/console (str  "cancel-task: Skipping `closed` transition because it's set to \"-\""))))
