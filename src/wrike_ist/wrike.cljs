@@ -47,7 +47,7 @@
 
 (defn get-folder-id
   [folder-names]
-  (let [uri (str "https://www.wrike.com/api/v4/folders")]
+  (let [uri (str "https://www.wrike.com/api/v4/folders?descendants=false")]
     (-> (http/get uri {:headers (headers)})
         (.then parse-body)
         (.then (fn [response]
@@ -55,7 +55,6 @@
                    (.info js/console (str "get-folder-id: Querying for folder names: " folder-names))
                    (let [data (get response "data" [])
                          matching-folder-ids (->> data
-                                                  (mapcat #(get % "children"))
                                                   (filter #(contains? folder-names (get % "title")))
                                                   (map #(get % "id")))]
                        (.info js/console (str "get-folder-id: Data object: " data))
