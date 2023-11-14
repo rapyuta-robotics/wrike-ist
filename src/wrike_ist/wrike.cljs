@@ -11,7 +11,7 @@
   {:Authorization (str "bearer " (wrike-token))
    :Content-Type "application/json"})
 
-(def folder-names "98_issues 02_sootballs_releases")
+(def folder-names ["98_issues" "02_sootballs_releases"])
 
 (def link-badge
   (str "<span "
@@ -89,7 +89,6 @@
 (defn is-wrike-task-in-folder? [permalink]
   (find-task permalink)
   (fn [{:strs [task-id]}]
-    (.info js/console "is-wrike-task-in-folder?: Start of the function")
     (let [uri (str "https://www.wrike.com/api/v4/tasks/" task-id)]
       (-> (http/get uri {:headers (headers)})
           (.then parse-body)
@@ -122,16 +121,14 @@
    (fn [resolve reject]
      (.info js/console "check-valid-task: Start of the function")
      (when (and target-branch (str/starts-with? target-branch "main"))
-             (if (is-wrike-task-in-folder? permalink)
-               (do
-                 (.info js/console "check-valid-task: Task is in the folder or an inherited folder: true")
-                 (resolve permalink))
-               (do
-                 (.error js/console "check-valid-task: Task not found in folder")
-                 (reject (js/Error. "check-valid-task: Task not found in folder"))))))))
-
-
-
+       (let [task-in-folder? (is-wrike-task-in-folder? permalink)]
+         (if task-in-folder?
+           (do
+             (.info js/console "check-valid-task: Task is in the folder or an inherited folder: true")
+             (resolve permalink))
+           (do
+             (.error js/console "check-valid-task: Task not found in folder")
+             (reject (js/Error. "check-valid-task: Task not found in folder")))))))))
 
 (defn link-pr
   [{:keys [pr-url permalink] :as details}]
