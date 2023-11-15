@@ -98,8 +98,7 @@
 (defn check-valid-task
   [{:keys [permalink target-branch]}]
   (js/Promise.
-   (fn [resolve reject]
-     (.info js/console "check-valid-task: Start of the function")
+   (fn [resolve reject] 
      (when (and target-branch (str/starts-with? target-branch "main"))
        (let [task-in-folder-promise (is-wrike-task-in-folder? permalink)]
          (.then task-in-folder-promise
@@ -107,7 +106,7 @@
                   (if task-in-folder?
                     (do
                       (.info js/console "check-valid-task: Task is in the folder or an inherited folder: true")
-                      (resolve))
+                      (resolve true))
                     (do
                       (.error js/console "check-valid-task: Task not found in folder")
                       (reject (js/Error. "check-valid-task: Task not found in folder")))))))))))
@@ -137,7 +136,7 @@
            (.then #(.log js/console (str  "link-pr: PR link sent to task")))
            (.catch #(if (= % :present)
                       (.log js/console (str  "link-pr: PR link already in comments"))
-                      (js/Promise.reject %))))))))
+                      (js/Promise.resolve %))))))))
 
 (defn folder-statuses
   [folder-id]
