@@ -142,7 +142,7 @@
         (.then
          (fn [_]
            (js/Promise.all [check-valid-task-promise])))
-        (.catch #(js/Promise.reject %)))))
+        (.catch #(js/Promise.resolve %)))))
 
 (defn folder-statuses
   [folder-id]
