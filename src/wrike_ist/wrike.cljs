@@ -123,7 +123,7 @@
      (.info js/console "check-valid-task: Start of the function")
      (when (and target-branch (str/starts-with? target-branch "main"))
        (let [task-in-folder? (is-wrike-task-in-folder? permalink)]
-         (if task-in-folder?
+         (if (task-in-folder?)
            (do
              (.info js/console "check-valid-task: Task is in the folder or an inherited folder: true")
              (resolve permalink))
