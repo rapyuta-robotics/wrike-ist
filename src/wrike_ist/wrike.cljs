@@ -171,7 +171,8 @@
                        (.then (fn [{workflows "data"}]
                                 (->> workflows
                                      (filter #(= (get % "id") id))
-                                     first)))))))
+                                     first)))
+                       (js/Promise.resolve)))))
         (.then (fn [{statuses "customStatuses"}]
                  (filter #(= (get % "hidden") false) statuses))))))
 
@@ -207,13 +208,19 @@
 
 (defn update-task-status
   [{task-id "id" [folder-id] "parentIds"} wanted]
-  (.then
-   (next-status folder-id wanted)
-   (fn [{:strs [id]}]
-     (let [uri (str "https://www.wrike.com/api/v4/tasks/" task-id)
-           params (clj->js {:customStatus id})]
-       (http/put uri {:headers (headers)
-                      :body (js/JSON.stringify params)})))))
+  (js/Promise.
+   (fn [resolve _]
+     (try
+       (.then
+        (next-status folder-id wanted)
+        (fn [{:strs [id]}]
+          (let [uri (str "https://www.wrike.com/api/v4/tasks/" task-id)
+                params (clj->js {:customStatus id})]
+            (http/put uri {:headers (headers)
+                           :body (js/JSON.stringify params)}))))
+       (catch js/Error e
+         (.log js/console (str "Error in update-task-status: " e))
+         (resolve task-id))))))
 
 (defn progress-task
   [{:keys [permalink]} wanted-status]
@@ -223,7 +230,7 @@
       #(update-task-status % {:wanted-status wanted-status
                               :wanted-group "In Progress"}))
      (do
-       (js/console.log "Skipping `closed` transition because it's set to \"-\"")
+       (js/console.log "Skipping `open` transition because it's set to \"-\"")
        (js/Promise.resolve))))
 
 (defn complete-task
