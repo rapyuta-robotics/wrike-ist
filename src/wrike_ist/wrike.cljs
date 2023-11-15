@@ -51,7 +51,7 @@
         (.then parse-body)
         (.then (fn [response]
                  (let [title (-> response
-                                (get-in ["data" 0 "title"]))]
+                                 (get-in ["data" 0 "title"]))]
                    (.info js/console (str "Folder ID: " folder-id " Title: " title))
                    (let [lowercase-folder-names (map clojure.string/lower-case folder-names)
                          parent-ids (-> response
@@ -59,7 +59,7 @@
                                         (or []))]
                      (.info js/console (str "Parent IDs: " parent-ids)) 
                      (if (and #_{:clj-kondo/ignore [:not-empty?]}
-                              (not (empty? title))
+                          (not (empty? title))
                               (some #(str/starts-with? title %) lowercase-folder-names))
                        (do
                          (.info js/console (str "Match found for folder: " title))
@@ -138,7 +138,7 @@
                  (.catch
                   #(if (= % :present)
                      (.log js/console (str  "link-pr: PR link already in comments"))
-                     (js/Promise.reject %)))))))
+                     (js/Promise.resolve %)))))))
         (.then
          (fn [_]
            (js/Promise.all [check-valid-task-promise])))
