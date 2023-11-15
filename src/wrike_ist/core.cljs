@@ -58,6 +58,7 @@
                 (.then
                  (fn [result]
                    (.log js/console (str "Result of link-pr: " result)))
-                 (.catch #(core/setFailed (.-message %)))))
-            (recur (rest links)))))
-        (js/console.log "No pull_request in payload"))))
+                 (.catch #(core/setFailed (.-message %))))))
+          (recur (rest links))))
+      (js/console.log "No pull_request in payload"))))
+
