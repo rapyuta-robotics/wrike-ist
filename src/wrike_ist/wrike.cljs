@@ -131,19 +131,18 @@
                                            :plainText false})]
                       (http/post uri {:headers (headers)
                                       :body (js/JSON.stringify params)}))))
-                 (.then #(.log js/console (str  "link-pr: PR link sent to task")))
+                 (.then
+                  (fn [_]
+                    (.log js/console (str  "link-pr: PR link sent to task"))
+                    (js/Promise.resolve)))
                  (.catch
                   #(if (= % :present)
                      (.log js/console (str  "link-pr: PR link already in comments"))
-                     (js/Promise.resolve %)))))))
+                     (js/Promise.reject %)))))))
         (.then
          (fn [_]
-           (js/Promise.all [check-valid-task-promise]))
-         (.catch #(js/Promise.reject %))))))
-
-
-
-
+           (js/Promise.all [check-valid-task-promise])))
+        (.catch #(js/Promise.reject %)))))
 
 (defn folder-statuses
   [folder-id]
