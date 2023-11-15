@@ -59,7 +59,9 @@
                                         (get-in ["data" 0 "parentIds"])
                                         (or []))]
                      (.info js/console (str "Parent IDs: " parent-ids)) 
-                     (if (some #(str/starts-with? title %) lowercase-folder-names)
+                     (if (and #_{:clj-kondo/ignore [:not-empty?]}
+                              (not (empty? title))
+                              (some #(str/starts-with? title %) lowercase-folder-names))
                        (do
                          (.info js/console (str "Match found for folder: " title))
                          (js/Promise.resolve true))
@@ -67,8 +69,7 @@
                         (for [parent-id parent-ids]
                           (fetch-folder-details parent-id folder-names)))))))))))
 
-
- (defn is-wrike-task-in-folder? [permalink]
+(defn is-wrike-task-in-folder? [permalink]
   (.then
    (find-task permalink)
    (fn [{:strs [id parentIds superParentIds title]}]
@@ -78,17 +79,21 @@
      (.info js/console (str "is-wrike-task-in-folder?: Super Parent IDs: " superParentIds))
      (.info js/console (str "is-wrike-task-in-folder?: Folder names to match: " folder-names))
      (let [all-parent-ids (concat parentIds superParentIds)
-           matching-folders (filter #(contains? folder-names (get % "title"))
-                                    (for [parent-id all-parent-ids
-                                          :let [folder-details (fetch-folder-details parent-id folder-names)]]
-                                      folder-details))]
-       (if (seq matching-folders)
-         (do
-           (.info js/console (str "is-wrike-task-in-folder?: Matching folders found: " matching-folders))
-           true)
-         (do
-           (.info js/console "is-wrike-task-in-folder?: No matching folders found")
-           false))))))
+           matching-folders-promises (for [parent-id all-parent-ids
+                                            :let [folder-details-promise (fetch-folder-details parent-id folder-names)]]
+                                        folder-details-promise)]
+       (js/Promise.all matching-folders-promises)
+       (.then
+        (js/Promise.all matching-folders-promises)
+        (fn [matching-folders]
+          (if (some true? matching-folders)
+            (do
+              (.info js/console (str "is-wrike-task-in-folder?: Matching folders found: " matching-folders))
+              true)
+            (do
+              (.info js/console "is-wrike-task-in-folder?: No matching folders found")
+              false))))))))
+
 
 (defn check-valid-task
   [{:keys [permalink target-branch]}]
