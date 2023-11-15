@@ -120,7 +120,7 @@
                     (reduce
                      (fn [ok comment]
                        (if (.includes (get comment "text") pr-url)
-                         (reduced (js/Promise.resolve true))
+                         (reduced (js/Promise.reject :present))
                          ok))
                      (js/Promise.resolve)
                      (get (parse-body response) "data"))))
@@ -136,13 +136,14 @@
                     (.log js/console (str  "link-pr: PR link sent to task"))
                     (js/Promise.resolve)))
                  (.catch
-                  #(if (= % :present)
-                     (.log js/console (str  "link-pr: PR link already in comments"))
-                     (js/Promise.resolve %)))))))
+                  #(js/Promise.reject (if (= % :present)
+                                        (str "link-pr: PR link already in comments")
+                                        %)))))))
         (.then
          (fn [_]
            (js/Promise.all [check-valid-task-promise])))
         (.catch #(js/Promise.reject %)))))
+
 
 (defn folder-statuses
   [folder-id]
