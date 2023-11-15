@@ -95,19 +95,23 @@
 (defn check-valid-task
   [permalink target-branch]
   (js/Promise.
-   (fn [resolve reject] 
-     (when (and target-branch (str/starts-with? target-branch "release"))
-       (.info js/console (str "check-valid-task: PR is targeted to release branch, checking if task is a valid bug ticket or part of planned releases"))
-       (let [task-in-folder-promise (is-wrike-task-in-folder? permalink)]
-         (.then task-in-folder-promise
-                (fn [task-in-folder?]
-                  (if task-in-folder?
-                    (do
-                      (.info js/console "check-valid-task: Task is in the folder or an inherited folder: true")
-                      (resolve permalink))
-                    (do
-                      (.error js/console "check-valid-task: Task not found in folder")
-                      (reject (js/Error. "check-valid-task: Task not found in folder")))))))))))
+   (fn [resolve reject]
+     (if (and target-branch (str/starts-with? target-branch "release"))
+       (do
+         (.info js/console (str "check-valid-task: PR is targeted to release branch, checking if task is a valid bug ticket or part of planned releases"))
+         (let [task-in-folder-promise (is-wrike-task-in-folder? permalink)]
+           (.then task-in-folder-promise
+                  (fn [task-in-folder?]
+                    (if task-in-folder?
+                      (do
+                        (.info js/console "check-valid-task: Task is in the folder or an inherited folder: true")
+                        (resolve permalink))
+                      (do
+                        (.error js/console "check-valid-task: Task not found in folder")
+                        (reject (js/Error. "check-valid-task: Task not found in folder"))))))))
+       (do
+         (.info js/console "check-valid-task: PR is not targeted to release branch, returning success")
+         (resolve true))))))
 
 (defn link-pr
   [{:keys [pr-url permalink target-branch] :as details}]
@@ -147,7 +151,11 @@
                             (.then check-valid-task-promise
                                    (fn [result]
                                      (.log js/console (str "check-valid-task-promise value: " result))))])))
-        (.catch #(js/Promise.reject %)))))
+        (.catch
+         #(do
+            (.log js/console (str "link-pr: Rejected with reason: " %))
+            (js/Promise.reject %))))))
+
 
 
 (defn folder-statuses
@@ -163,7 +171,8 @@
                        (.then (fn [{workflows "data"}]
                                 (->> workflows
                                      (filter #(= (get % "id") id))
-                                     first)))))))
+                                     first)))
+                       (js/Promise.resolve)))))
         (.then (fn [{statuses "customStatuses"}]
                  (filter #(= (get % "hidden") false) statuses))))))
 
@@ -209,10 +218,14 @@
 
 (defn progress-task
   [{:keys [permalink]} wanted-status]
-  (when (not-empty wanted-status)
-    (.then
-     (find-task permalink)
-     #(update-task-status % {:wanted-status wanted-status}))))
+   (if (not-empty wanted-status)
+     (.then
+      (find-task permalink)
+      #(update-task-status % {:wanted-status wanted-status
+                              :wanted-group "In Progress"}))
+     (do
+       (js/console.log "Skipping `open` transition because it's set to \"-\"")
+       (js/Promise.resolve))))
 
 (defn complete-task
   [{:keys [permalink]} wanted-status]
@@ -221,7 +234,9 @@
      (find-task permalink)
      #(update-task-status % {:wanted-status wanted-status
                              :wanted-group "Completed"}))
-    (.log js/console (str  "complete-task: Skipping `merged` transition because it's set to \"-\""))))
+    (do
+    (js/console.log "Skipping `merged` transition because it's set to \"-\"")
+    (js/Promise.resolve))))
 
 (defn cancel-task
   [{:keys [permalink]} wanted-status]
@@ -230,4 +245,6 @@
      (find-task permalink)
      #(update-task-status % {:wanted-status wanted-status
                              :wanted-group "Cancelled"}))
-    (.log js/console (str  "cancel-task: Skipping `closed` transition because it's set to \"-\""))))
+    (do
+    (js/console.log "Skipping `closed` transition because it's set to \"-\"")
+    (js/Promise.resolve))))
