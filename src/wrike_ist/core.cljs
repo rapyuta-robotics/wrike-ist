@@ -64,12 +64,11 @@
                   ;; else ignore
                   check-valid-task-promise)
                 (.then
-                 (fn [& results]
-                   (.info js/console (str "main: All promises resolved successfully. Results: " results))
-                   (js/Promise.resolve results))
+                 (fn [result]
+                   (.info js/console (str "Main function success: " result)))
                  (.catch
                   (fn [error]
-                    (.error js/console (str "main: Error in promise chain: " error))
+                    (.error js/console (str "Main function error: " error))
                     (core/setFailed (.-message error)))))))
           (recur (rest links))))
       (js/console.log "No pull_request in payload"))))
