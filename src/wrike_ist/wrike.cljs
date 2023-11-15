@@ -106,7 +106,7 @@
                   (if task-in-folder?
                     (do
                       (.info js/console "check-valid-task: Task is in the folder or an inherited folder: true")
-                      (resolve true))
+                      (resolve permalink))
                     (do
                       (.error js/console "check-valid-task: Task not found in folder")
                       (reject (js/Error. "check-valid-task: Task not found in folder")))))))))))
