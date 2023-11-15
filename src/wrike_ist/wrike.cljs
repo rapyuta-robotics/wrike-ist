@@ -59,10 +59,13 @@
                                         (or []))]
                      (.info js/console (str "Parent IDs: " parent-ids))
                      (if (some #(= title %) folder-names)
-                       (js/Promise.resolve true)
+                       (do
+                         (.info js/console (str "Match found for folder: " title))
+                         (js/Promise.resolve true))
                        (js/Promise.all
                         (for [parent-id parent-ids]
                           (fetch-folder-details parent-id folder-names)))))))))))
+
 
  (defn is-wrike-task-in-folder? [permalink]
   (.then
