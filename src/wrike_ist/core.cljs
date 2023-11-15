@@ -38,27 +38,29 @@
       (loop [links (extract-details pr)]
         (when-let [{:keys [state] :as details} (first links)]
           (let [link-pr-promise (wrike/link-pr details)]
-            (-> (case state
-                  :draft
-                  link-pr-promise
+            (.then link-pr-promise
+                   (fn [link-pr-result]
+                     (.log js/console (str "Result of link-pr: " link-pr-result))
+                     (condp = state
+                       :draft link-pr-result
+                       :open (-> (wrike/progress-task details (core/getInput "opened"))
+                                 (.then
+                                  (fn [progress-result]
+                                    (.log js/console (str "Result of progress-task: " progress-result))
+                                    (js/Promise.resolve progress-result))))
+                       :merged (-> (wrike/complete-task details (core/getInput "merged"))
+                                   (.then
+                                    (fn [complete-result]
+                                      (.log js/console (str "Result of complete-task: " complete-result))
+                                      (js/Promise.resolve complete-result))))
+                       :closed (-> (wrike/cancel-task details (core/getInput "closed"))
+                                   (.then
+                                    (fn [cancel-result]
+                                      (.log js/console (str "Result of cancel-task: " cancel-result))
+                                      (js/Promise.resolve cancel-result))))
+                       :else (js/Promise.resolve)))))
 
-                  :open
-                  (js/Promise.all
-                   [link-pr-promise
-                    (wrike/progress-task details (core/getInput "opened"))])
-
-                  :merged
-                  (wrike/complete-task details (core/getInput "merged"))
-
-                  :closed
-                  (wrike/cancel-task details (core/getInput "closed"))
-
-                  ;; else ignore
-                  (js/Promise.resolve))
-                (.then
-                 (fn [result]
-                   (.log js/console (str "Result of link-pr: " result)))
-                 (.catch #(core/setFailed (.-message %))))))
+          (.catch #(core/setFailed (.-message %)))
           (recur (rest links))))
       (js/console.log "No pull_request in payload"))))
 
