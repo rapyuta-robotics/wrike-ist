@@ -39,37 +39,24 @@
       (loop [links (extract-details pr)]
         (when-let [{:keys [state] :as details} (first links)]
           (let [check-valid-task-promise (wrike/check-valid-task details)]
-            (-> (case state
-                  :draft
-                  (js/Promise.all
-                   [(wrike/link-pr details)
-                    check-valid-task-promise])
-
-                  :open
-                  (js/Promise.all
-                   [(wrike/link-pr details)
-                    (wrike/progress-task details (core/getInput "opened"))
-                    check-valid-task-promise])
-
-                  :merged
-                  (js/Promise.all
-                   [(wrike/complete-task details (core/getInput "merged"))
-                    check-valid-task-promise])
-
-                  :closed
-                  (js/Promise.all
-                   [(wrike/cancel-task details (core/getInput "closed"))
-                    check-valid-task-promise])
-
-                  ;; else ignore
-                  check-valid-task-promise)
-                (.then
-                 (fn [result]
-                   (.info js/console (str "Main function success: " result))
-                   (js/Promise.resolve result))
-                 (.catch
-                  (fn [error]
-                    (.error js/console (str "Main function error: " error))
-                    (js/Promise.reject error))))))
+            (js/Promise.all
+             (case state
+               :draft [(wrike/link-pr details) check-valid-task-promise]
+               :open  [(wrike/link-pr details)
+                       (wrike/progress-task details (core/getInput "opened"))
+                       check-valid-task-promise]
+               :merged [(wrike/complete-task details (core/getInput "merged"))
+                        check-valid-task-promise]
+               :closed [(wrike/cancel-task details (core/getInput "closed"))
+                        check-valid-task-promise]
+               :else   [check-valid-task-promise]))
+            (.then
+             (fn [result]
+               (.info js/console (str "Main function success: " result))
+               (js/Promise.resolve result))
+             (.catch
+              (fn [error]
+                (.error js/console (str "Main function error: " error))
+                (js/Promise.reject error)))))
           (recur (rest links))))
       (js/console.log "No pull_request in payload"))))
