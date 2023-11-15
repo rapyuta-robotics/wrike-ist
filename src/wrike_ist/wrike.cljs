@@ -54,11 +54,12 @@
                                 (get-in ["data" 0 "title"]))]
                    (.info js/console (str "Folder ID: " folder-id))
                    (.info js/console (str "Folder Title: " title))
-                   (let [parent-ids (-> response
+                   (let [lowercase-folder-names (map clojure.string/lower-case folder-names)
+                         parent-ids (-> response
                                         (get-in ["data" 0 "parentIds"])
                                         (or []))]
                      (.info js/console (str "Parent IDs: " parent-ids)) 
-                     (if (some #(contains? title %) folder-names)
+                     (if (some #(= title %) lowercase-folder-names)
                        (do
                          (.info js/console (str "Match found for folder: " title))
                          (js/Promise.resolve true))
