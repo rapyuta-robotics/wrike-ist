@@ -57,8 +57,8 @@
                    (let [parent-ids (-> response
                                         (get-in ["data" 0 "parentIds"])
                                         (or []))]
-                     (.info js/console (str "Parent IDs: " parent-ids))
-                     (if (some #(= title %) folder-names)
+                     (.info js/console (str "Parent IDs: " parent-ids)) 
+                     (if (some #(contains? title %) folder-names)
                        (do
                          (.info js/console (str "Match found for folder: " title))
                          (js/Promise.resolve true))
