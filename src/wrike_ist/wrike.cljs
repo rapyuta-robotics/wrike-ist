@@ -95,20 +95,23 @@
 (defn check-valid-task
   [permalink target-branch]
   (js/Promise.
-   (fn [resolve reject] 
-     (when (and target-branch (str/starts-with? target-branch "release"))
-       (.info js/console (str "check-valid-task: PR is targeted to release branch, checking if task is a valid bug ticket or part of planned releases"))
-       (let [task-in-folder-promise (is-wrike-task-in-folder? permalink)]
-         (.then task-in-folder-promise
-                (fn [task-in-folder?]
-                  (if task-in-folder?
-                    (do
-                      (.info js/console "check-valid-task: Task is in the folder or an inherited folder: true")
-                      (resolve permalink))
-                    (do
-                      (.error js/console "check-valid-task: Task not found in folder")
-                      (reject (js/Error. "check-valid-task: Task not found in folder")))))))))))
-
+   (fn [resolve reject]
+     (if (and target-branch (str/starts-with? target-branch "release"))
+       (do
+         (.info js/console (str "check-valid-task: PR is targeted to release branch, checking if task is a valid bug ticket or part of planned releases"))
+         (let [task-in-folder-promise (is-wrike-task-in-folder? permalink)]
+           (.then task-in-folder-promise
+                  (fn [task-in-folder?]
+                    (if task-in-folder?
+                      (do
+                        (.info js/console "check-valid-task: Task is in the folder or an inherited folder: true")
+                        (resolve permalink))
+                      (do
+                        (.error js/console "check-valid-task: Task not found in folder")
+                        (reject (js/Error. "check-valid-task: Task not found in folder"))))))))
+       (do
+         (.info js/console "check-valid-task: PR is not targeted to release branch, returning success")
+         (resolve permalink))))))
 (defn link-pr
   [{:keys [pr-url permalink target-branch] :as details}]
   (let [check-valid-task-promise (check-valid-task permalink target-branch)]
