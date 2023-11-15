@@ -43,9 +43,7 @@
                 (wrike/link-pr details)
 
                 :open
-                (js/Promise.all
-                 [(wrike/link-pr details)
-                  (wrike/progress-task details (core/getInput "opened"))])
+                (wrike/link-pr details)
 
                 :merged
                 (wrike/complete-task details (core/getInput "merged"))
