@@ -52,12 +52,13 @@
         (.then (fn [response]
                  (let [title (-> response
                                  (get-in ["data" 0 "title"]))]
-                   (.info js/console (str "Folder ID: " folder-id " Title: " title))
+                   ()
+                  ;;  (.info js/console (str "Folder ID: " folder-id " Title: " title))
                    (let [lowercase-folder-names (map clojure.string/lower-case folder-names)
                          parent-ids (-> response
                                         (get-in ["data" 0 "parentIds"])
                                         (or []))]
-                     (.info js/console (str "Parent IDs: " parent-ids)) 
+                    ;;  (.info js/console (str "Parent IDs: " parent-ids)) 
                      (if (and #_{:clj-kondo/ignore [:not-empty?]}
                           (not (empty? title))
                               (some #(str/starts-with? title %) lowercase-folder-names))
@@ -95,7 +96,7 @@
   [permalink target-branch]
   (js/Promise.
    (fn [resolve reject] 
-     (when (and target-branch (str/starts-with? target-branch "main"))
+     (when (and target-branch (str/starts-with? target-branch "release"))
        (let [task-in-folder-promise (is-wrike-task-in-folder? permalink)]
          (.then task-in-folder-promise
                 (fn [task-in-folder?]
