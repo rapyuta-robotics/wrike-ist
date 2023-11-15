@@ -38,30 +38,31 @@
     (if-let [pr (.-pull_request payload)]
       (loop [links (extract-details pr)]
         (when-let [{:keys [state] :as details} (first links)]
-          (-> (case state
-                :draft
-                (js/Promise.all
-                 [(wrike/check-valid-task details)
-                  (wrike/link-pr details)])
+          (let [check-valid-task-promise (wrike/check-valid-task details)]
+            (-> (case state
+                  :draft
+                  (js/Promise.all
+                   [(wrike/link-pr details)
+                    check-valid-task-promise])
 
-                :open
-                (js/Promise.all
-                 [(wrike/check-valid-task details)
-                  (wrike/link-pr details)
-                  (wrike/progress-task details (core/getInput "opened"))])
+                  :open
+                  (js/Promise.all
+                   [(wrike/link-pr details)
+                    (wrike/progress-task details (core/getInput "opened"))
+                    check-valid-task-promise])
 
-                :merged
-                (js/Promise.all
-                [(wrike/check-valid-task details)
-                 (wrike/complete-task details (core/getInput "merged"))])
+                  :merged
+                  (js/Promise.all
+                   [(wrike/complete-task details (core/getInput "merged"))
+                    check-valid-task-promise])
 
-                :closed
-                (js/Promise.all
-                [(wrike/check-valid-task details)
-                 (wrike/cancel-task details (core/getInput "closed"))])
+                  :closed
+                  (js/Promise.all
+                   [(wrike/cancel-task details (core/getInput "closed"))
+                    check-valid-task-promise])
 
-                ;; else ignore
-                (js/Promise.resolve))
-              (.catch #(core/setFailed (.-message %))))
+                  ;; else ignore
+                  check-valid-task-promise)
+                (.catch #(core/setFailed (.-message %)))))
           (recur (rest links))))
       (js/console.log "No pull_request in payload"))))

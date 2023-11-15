@@ -52,8 +52,7 @@
         (.then (fn [response]
                  (let [title (-> response
                                 (get-in ["data" 0 "title"]))]
-                   (.info js/console (str "Folder ID: " folder-id))
-                   (.info js/console (str "Folder Title: " title))
+                   (.info js/console (str "Folder ID: " folder-id " Title: " title))
                    (let [lowercase-folder-names (map clojure.string/lower-case folder-names)
                          parent-ids (-> response
                                         (get-in ["data" 0 "parentIds"])
@@ -73,10 +72,7 @@
   (.then
    (find-task permalink)
    (fn [{:strs [id parentIds superParentIds title]}]
-     (.info js/console (str "is-wrike-task-in-folder?: Task Name: " title))
-     (.info js/console (str "is-wrike-task-in-folder?: Task ID: " id))
-     (.info js/console (str "is-wrike-task-in-folder?: Parent IDs: " parentIds))
-     (.info js/console (str "is-wrike-task-in-folder?: Super Parent IDs: " superParentIds))
+     (.info js/console (str "is-wrike-task-in-folder?: Task Name: " title " id: " id " parentIds: " parentIds " superParentIds: " superParentIds))
      (.info js/console (str "is-wrike-task-in-folder?: Folder names to match: " folder-names))
      (let [all-parent-ids (concat parentIds superParentIds)
            matching-folders-promises (for [parent-id all-parent-ids
