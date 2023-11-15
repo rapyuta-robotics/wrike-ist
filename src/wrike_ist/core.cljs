@@ -65,11 +65,11 @@
                   check-valid-task-promise)
                 (.then
                  (fn [result]
-                   (.info js/console (str "Main function success: " result)))
+                   (.info js/console (str "Main function success: " result))
+                   (js/Promise.resolve result))
                  (.catch
                   (fn [error]
                     (.error js/console (str "Main function error: " error))
-                    (core/setFailed (.-message error)))))))
+                    (js/Promise.reject error))))))
           (recur (rest links))))
       (js/console.log "No pull_request in payload"))))
-
