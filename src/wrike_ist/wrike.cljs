@@ -120,7 +120,7 @@
                     (reduce
                      (fn [ok comment]
                        (if (.includes (get comment "text") pr-url)
-                         (reduced (js/Promise.reject :present))
+                         (reduced (js/Promise.resolve :present))
                          ok))
                      (js/Promise.resolve)
                      (get (parse-body response) "data"))))
