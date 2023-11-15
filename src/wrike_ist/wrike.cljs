@@ -32,14 +32,14 @@
 
 (defn find-task
   [permalink]
-  (let [uri (str "https://www.wrike.com/api/v4/tasks?fields=[parentIds]"
+  (let [uri (str "https://www.wrike.com/api/v4/tasks?fields=[parentIds superParentIds]"
                  "&permalink=" (js/encodeURIComponent permalink))]
     (.then
      (http/get uri {:headers (headers)})
      (fn [response]
        (if-let [task (get-in (parse-body response) ["data" 0])]
          (do
-           (.info js/console "find-task: Task found")
+           (.info js/console "find-task: Task found" (:title task))
            (js/Promise.resolve task))
          (do
            (.error js/console "find-task: Task not found")
@@ -58,13 +58,13 @@
                                                   (filter #(contains? folder-names (get % "title")))
                                                   (map #(get % "id")))]
                       ;;  (.info js/console (str "get-folder-id: Data object: " data))
-                       (if (seq matching-folder-ids)
-                         (do
-                           (.info js/console (str "get-folder-id: Matching folder IDs found: " matching-folder-ids))
-                           matching-folder-ids)
-                         (do
-                           (.info js/console "get-folder-id: No matching folder IDs found")
-                           [])))))))))
+                     (if (seq matching-folder-ids)
+                       (do
+                         (.info js/console (str "get-folder-id: Matching folder IDs found: " matching-folder-ids))
+                         matching-folder-ids)
+                       (do
+                         (.info js/console "get-folder-id: No matching folder IDs found")
+                         [])))))))))
 
 
 (defn fetch-wrike-task [task-id]
@@ -82,36 +82,33 @@
         (.then parse-body)
         (.then (fn [response]
                  (let [title (-> response
-                                (get-in ["data" 0 "title"]))]
+                                 (get-in ["data" 0 "title"]))]
                    (.info js/console (str "Folder title: " title))
                    response))))))
 
 (defn is-wrike-task-in-folder? [permalink]
   (.then
    (find-task permalink)
-   (fn [{:strs [id]}]
-     (let [uri (str "https://www.wrike.com/api/v4/tasks/" id)]
-       (-> (http/get uri {:headers (headers)})
-           (.then parse-body)
-           (.then (fn [{:strs [parentIds superParentIds title]}]
-                    (.info js/console (str "is-wrike-task-in-folder?: Task Name: " title))
-                    (.info js/console (str "is-wrike-task-in-folder?: Task ID: " id))
-                    (.info js/console (str "is-wrike-task-in-folder?: Parent IDs: " parentIds))
-                    (.info js/console (str "is-wrike-task-in-folder?: Super Parent IDs: " superParentIds))
-                    (let [all-parent-ids (concat parentIds superParentIds)
-                          folder-names folder-names ; Add your folder names here
-                          matching-folders (filter #(contains? folder-names (get % "title"))
-                                                  (for [parent-id all-parent-ids
-                                                        :let [folder-details (fetch-folder-details parent-id)]]
-                                                    folder-details))]
-                      (.info js/console (str "is-wrike-task-in-folder?: Folder names to match: " folder-names))
-                      (if (seq matching-folders)
-                        (do
-                          (.info js/console (str "is-wrike-task-in-folder?: Matching folders found: " matching-folders))
-                          true)
-                        (do
-                          (.info js/console "is-wrike-task-in-folder?: No matching folders found")
-                          false))))))))))
+   (fn [{:strs [id parentIds superParentIds title]}]
+
+     (.info js/console (str "is-wrike-task-in-folder?: Task Name: " title))
+     (.info js/console (str "is-wrike-task-in-folder?: Task ID: " id))
+     (.info js/console (str "is-wrike-task-in-folder?: Parent IDs: " parentIds))
+     (.info js/console (str "is-wrike-task-in-folder?: Super Parent IDs: " superParentIds))
+     (let [all-parent-ids (concat parentIds superParentIds)
+           folder-names folder-names ; Add your folder names here
+           matching-folders (filter #(contains? folder-names (get % "title"))
+                                    (for [parent-id all-parent-ids
+                                          :let [folder-details (fetch-folder-details parent-id)]]
+                                      folder-details))]
+       (.info js/console (str "is-wrike-task-in-folder?: Folder names to match: " folder-names))
+       (if (seq matching-folders)
+         (do
+           (.info js/console (str "is-wrike-task-in-folder?: Matching folders found: " matching-folders))
+           true)
+         (do
+           (.info js/console "is-wrike-task-in-folder?: No matching folders found")
+           false))))))
 
 
 
@@ -142,7 +139,7 @@
    (fn [{:strs [id]}]
      (let [uri (str "https://www.wrike.com/api/v4/tasks/" id "/comments")]
        (-> (http/get uri {:headers (headers)})
-            
+
            (.then (fn find-existing-link [response]
                     (reduce
                      (fn [ok comment]
