@@ -93,6 +93,7 @@
       (-> (http/get uri {:headers (headers)})
           (.then parse-body)
           (.then (fn [task]
+                  (.info js/console (str "is-wrike-task-in-folder?: task response: " id " task: " task))
                   (let [parent-ids (concat (:parentIds task) (:superParentIds task))
                         folder-names folder-names
                         matching-folders (filter #(contains? folder-names (get % "title"))
