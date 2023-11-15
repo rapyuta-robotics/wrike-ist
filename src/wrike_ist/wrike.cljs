@@ -208,23 +208,17 @@
 
 (defn update-task-status
   [{task-id "id" [folder-id] "parentIds"} wanted]
-  (js/Promise.
-   (fn [resolve _]
-     (try
-       (.then
-        (next-status folder-id wanted)
-        (fn [{:strs [id]}]
-          (let [uri (str "https://www.wrike.com/api/v4/tasks/" task-id)
-                params (clj->js {:customStatus id})]
-            (http/put uri {:headers (headers)
-                           :body (js/JSON.stringify params)}))))
-       (catch js/Error e
-         (.log js/console (str "Error in update-task-status: " e))
-         (resolve task-id))))))
+  (.then
+   (next-status folder-id wanted)
+   (fn [{:strs [id]}]
+     (let [uri (str "https://www.wrike.com/api/v4/tasks/" task-id)
+           params (clj->js {:customStatus id})]
+       (http/put uri {:headers (headers)
+                      :body (js/JSON.stringify params)})))))
 
 (defn progress-task
   [{:keys [permalink]} wanted-status]
-   (if-not (= "-" wanted-status)
+   (if (not-empty wanted-status)
      (.then
       (find-task permalink)
       #(update-task-status % {:wanted-status wanted-status
