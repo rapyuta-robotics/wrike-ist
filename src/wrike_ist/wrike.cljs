@@ -39,7 +39,7 @@
       (fn [response]
         (if-let [task (get-in (parse-body response) ["data" 0])]
           (do
-            (.info js/console "find-task: Task found")
+            (.info js/console "")
             (js/Promise.resolve task))
           (do
             (.error js/console "find-task: Task not found")
@@ -140,7 +140,8 @@
                                         (str "link-pr: PR link already in comments")
                                         %)))))))
         (.then
-         (fn [_]
+         (fn [_] 
+           (.log js/console (str "check-valid-task-promise value: " check-valid-task-promise))
            (js/Promise.all [check-valid-task-promise])))
         (.catch #(js/Promise.reject %)))))
 
