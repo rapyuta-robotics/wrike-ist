@@ -59,7 +59,7 @@
                                         (get-in ["data" 0 "parentIds"])
                                         (or []))]
                      (.info js/console (str "Parent IDs: " parent-ids)) 
-                     (if (some #(= title %) lowercase-folder-names)
+                     (if (some #(str/starts-with? title %) lowercase-folder-names)
                        (do
                          (.info js/console (str "Match found for folder: " title))
                          (js/Promise.resolve true))
