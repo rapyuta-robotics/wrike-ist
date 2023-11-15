@@ -87,8 +87,9 @@
                    response))))))
 
 (defn is-wrike-task-in-folder? [permalink]
-  (find-task permalink)
-  (fn [{:strs [id]}]
+  (.then
+   (find-task permalink)
+   (fn [{:strs [id]}]
     (let [uri (str "https://www.wrike.com/api/v4/tasks/" id)]
       (-> (http/get uri {:headers (headers)})
           (.then parse-body)
@@ -107,7 +108,7 @@
                         true)
                       (do
                         (.info js/console "is-wrike-task-in-folder?: No matching folders found")
-                        false)))))))))
+                        false))))))))))
 
 
 
