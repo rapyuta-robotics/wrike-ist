@@ -112,6 +112,7 @@
        (do
          (.info js/console "check-valid-task: PR is not targeted to release branch, returning success")
          (resolve permalink))))))
+
 (defn link-pr
   [{:keys [pr-url permalink target-branch] :as details}]
   (let [check-valid-task-promise (check-valid-task permalink target-branch)]

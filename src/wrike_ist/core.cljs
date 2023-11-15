@@ -32,29 +32,32 @@
             :repository-name repository-name})
          links)))))
 
-(defn main
-  []
+(defn main []
   (let [payload (.-payload (.-context github))]
     (if-let [pr (.-pull_request payload)]
       (loop [links (extract-details pr)]
         (when-let [{:keys [state] :as details} (first links)]
-          (-> (case state
-                :draft
-                (wrike/link-pr details)
+          (let [link-pr-promise (wrike/link-pr details)]
+            (-> (case state
+                  :draft
+                  link-pr-promise
 
-                :open
-                (js/Promise.all
-                 [(wrike/link-pr details)
-                  (wrike/progress-task details (core/getInput "opened"))])
+                  :open
+                  (js/Promise.all
+                   [link-pr-promise
+                    (wrike/progress-task details (core/getInput "opened"))])
 
-                :merged
-                (wrike/complete-task details (core/getInput "merged"))
+                  :merged
+                  (wrike/complete-task details (core/getInput "merged"))
 
-                :closed
-                (wrike/cancel-task details (core/getInput "closed"))
+                  :closed
+                  (wrike/cancel-task details (core/getInput "closed"))
 
-                ;; else ignore
-                (js/Promise.resolve))
-              (.catch #(core/setFailed (.-message %))))
-          (recur (rest links))))
-      (js/console.log "No pull_request in payload"))))
+                  ;; else ignore
+                  (js/Promise.resolve))
+                (.then
+                 (fn [result]
+                   (.log js/console (str "Result of link-pr: " result)))
+                 (.catch #(core/setFailed (.-message %)))))
+            (recur (rest links)))))
+        (js/console.log "No pull_request in payload"))))
