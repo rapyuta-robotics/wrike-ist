@@ -90,25 +90,28 @@
   (.then
    (find-task permalink)
    (fn [{:strs [id]}]
-    (let [uri (str "https://www.wrike.com/api/v4/tasks/" id)]
-      (-> (http/get uri {:headers (headers)})
-          (.then parse-body)
-          (.then (fn [task]
-                  (.info js/console (str "is-wrike-task-in-folder?: task response: " id " task: " task))
-                  (let [parent-ids (concat (:parentIds task) (:superParentIds task))
-                        folder-names folder-names
-                        matching-folders (filter #(contains? folder-names (get % "title"))
-                                                (for [parent-id parent-ids
-                                                      :let [folder-details (fetch-folder-details parent-id)]]
-                                                  folder-details))]
-                    (.info js/console (str "is-wrike-task-in-folder?: parent IDs for folders found: " parent-ids))
-                    (if (seq matching-folders)
-                      (do
-                        (.info js/console (str "is-wrike-task-in-folder?: Matching folders found: " matching-folders))
-                        true)
-                      (do
-                        (.info js/console "is-wrike-task-in-folder?: No matching folders found")
-                        false))))))))))
+     (let [uri (str "https://www.wrike.com/api/v4/tasks/" id)]
+       (-> (http/get uri {:headers (headers)})
+           (.then parse-body)
+           (.then (fn [{:strs [parentIds superParentIds title]}]
+                    (.info js/console (str "is-wrike-task-in-folder?: Task Name: " title))
+                    (.info js/console (str "is-wrike-task-in-folder?: Task ID: " id))
+                    (.info js/console (str "is-wrike-task-in-folder?: Parent IDs: " parentIds))
+                    (.info js/console (str "is-wrike-task-in-folder?: Super Parent IDs: " superParentIds))
+                    (let [all-parent-ids (concat parentIds superParentIds)
+                          folder-names folder-names ; Add your folder names here
+                          matching-folders (filter #(contains? folder-names (get % "title"))
+                                                  (for [parent-id all-parent-ids
+                                                        :let [folder-details (fetch-folder-details parent-id)]]
+                                                    folder-details))]
+                      (.info js/console (str "is-wrike-task-in-folder?: Folder names to match: " folder-names))
+                      (if (seq matching-folders)
+                        (do
+                          (.info js/console (str "is-wrike-task-in-folder?: Matching folders found: " matching-folders))
+                          true)
+                        (do
+                          (.info js/console "is-wrike-task-in-folder?: No matching folders found")
+                          false))))))))))
 
 
 
