@@ -39,7 +39,7 @@
      (fn [response]
        (if-let [task (get-in (parse-body response) ["data" 0])]
          (do
-           (.info js/console "find-task: Task found" (:title task))
+           (.info js/console "find-task: Task found" (.-title task))
            (js/Promise.resolve task))
          (do
            (.error js/console "find-task: Task not found")
