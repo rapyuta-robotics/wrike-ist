@@ -101,14 +101,16 @@
    (fn [resolve reject]
      (.info js/console "check-valid-task: Start of the function")
      (when (and target-branch (str/starts-with? target-branch "main"))
-       (let [task-in-folder? (is-wrike-task-in-folder? permalink)]
-         (if (task-in-folder?)
-           (do
-             (.info js/console "check-valid-task: Task is in the folder or an inherited folder: true")
-             (resolve permalink))
-           (do
-             (.error js/console "check-valid-task: Task not found in folder")
-             (reject (js/Error. "check-valid-task: Task not found in folder")))))))))
+       (let [task-in-folder-promise (is-wrike-task-in-folder? permalink)]
+         (.then task-in-folder-promise
+                (fn [task-in-folder?]
+                  (if task-in-folder?
+                    (do
+                      (.info js/console "check-valid-task: Task is in the folder or an inherited folder: true")
+                      (resolve permalink))
+                    (do
+                      (.error js/console "check-valid-task: Task not found in folder")
+                      (reject (js/Error. "check-valid-task: Task not found in folder")))))))))))
 
 (defn link-pr
   [{:keys [pr-url permalink] :as details}]
