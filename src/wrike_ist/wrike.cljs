@@ -32,7 +32,7 @@
 
 (defn find-task
   [permalink]
-  (let [uri (str "https://www.wrike.com/api/v4/tasks?fields=[parentIds superParentIds]"
+  (let [uri (str "https://www.wrike.com/api/v4/tasks?fields=['parentIds', 'superParentIds']"
                  "&permalink=" (js/encodeURIComponent permalink))]
     (.then
      (http/get uri {:headers (headers)})
