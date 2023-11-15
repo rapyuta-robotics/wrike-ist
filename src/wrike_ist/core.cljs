@@ -19,8 +19,8 @@
             url ^String (.-html_url pr-obj)
             title ^String (.-title pr-obj)
             id ^long (.-number pr-obj)
-            target-branch ^String (-> pr-obj (.-base) (.-ref))
-            repository-name (-> pr-obj (.-head) (.-repo) (.-name))]
+            target-branch ^String (-> pr-obj ^String (.-base) ^String (.-ref))
+            repository-name ^String (-> pr-obj ^String (.-head) ^String (.-repo) ^String (.-name))]
         (map
          (fn [permalink]
            {:state state
