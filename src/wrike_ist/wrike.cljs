@@ -88,7 +88,7 @@
               (.info js/console (str "is-wrike-task-in-folder?: Matching folders found"))
               true)
             (do
-              (.info js/console "is-wrike-task-in-folder?: No matching folders found")
+              (.info js/console "is-wrike-task-in-folder?: Task is not part of one of the required folders: " folder-names)
               false))))))))
 
 
@@ -97,6 +97,7 @@
   (js/Promise.
    (fn [resolve reject] 
      (when (and target-branch (str/starts-with? target-branch "release"))
+       (.info js/console (str "check-valid-task: PR is target to release branch, checking task folder validity"))
        (let [task-in-folder-promise (is-wrike-task-in-folder? permalink)]
          (.then task-in-folder-promise
                 (fn [task-in-folder?]
