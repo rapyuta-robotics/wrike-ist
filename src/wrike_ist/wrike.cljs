@@ -120,7 +120,7 @@
                     (reduce
                      (fn [ok comment]
                        (if (.includes (get comment "text") pr-url)
-                         (reduced (js/Promise.resolve :present))
+                         (reduced (js/Promise.resolve true))
                          ok))
                      (js/Promise.resolve)
                      (get (parse-body response) "data"))))
@@ -142,7 +142,7 @@
         (.then
          (fn [_]
            (js/Promise.all [check-valid-task-promise])))
-        (.catch #(js/Promise.resolve %)))))
+        (.catch #(js/Promise.reject %)))))
 
 (defn folder-statuses
   [folder-id]
