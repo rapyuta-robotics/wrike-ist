@@ -88,7 +88,7 @@
         (fn [matching-folders]
           (if (some true? matching-folders)
             (do
-              (.info js/console (str "is-wrike-task-in-folder?: Matching folders found: " matching-folders))
+              (.info js/console (str "is-wrike-task-in-folder?: Matching folders found"))
               true)
             (do
               (.info js/console "is-wrike-task-in-folder?: No matching folders found")
@@ -107,7 +107,7 @@
                   (if task-in-folder?
                     (do
                       (.info js/console "check-valid-task: Task is in the folder or an inherited folder: true")
-                      (resolve permalink))
+                      (resolve))
                     (do
                       (.error js/console "check-valid-task: Task not found in folder")
                       (reject (js/Error. "check-valid-task: Task not found in folder")))))))))))
