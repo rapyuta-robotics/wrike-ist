@@ -39,7 +39,7 @@
      (fn [response]
        (if-let [task (get-in (parse-body response) ["data" 0])]
          (do
-           (.info js/console "find-task: Task found" (.-title task))
+           (.info js/console "find-task: Task found")
            (js/Promise.resolve task))
          (do
            (.error js/console "find-task: Task not found")
@@ -66,15 +66,6 @@
                          (.info js/console "get-folder-id: No matching folder IDs found")
                          [])))))))))
 
-
-(defn fetch-wrike-task [task-id]
-  (let [task-url (str "https://www.wrike.com/api/v4/tasks/" task-id)
-        headers {:headers (headers)}
-        response (-> (http/get task-url headers)
-                     parse-body)]
-    (if (= 200 (:status response))
-      response
-      nil)))
 
 (defn fetch-folder-details [folder-id]
   (let [uri (str "https://www.wrike.com/api/v4/folders/" folder-id)]
