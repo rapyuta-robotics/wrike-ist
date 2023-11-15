@@ -151,7 +151,11 @@
                             (.then check-valid-task-promise
                                    (fn [result]
                                      (.log js/console (str "check-valid-task-promise value: " result))))])))
-        (.catch #(js/Promise.reject %)))))
+        (.catch
+         #(do
+            (.log js/console (str "link-pr: Rejected with reason: " %))
+            (js/Promise.reject %))))))
+
 
 
 (defn folder-statuses

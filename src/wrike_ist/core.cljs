@@ -32,35 +32,29 @@
             :repository-name repository-name})
          links)))))
 
-(defn main []
+(defn main
+  []
   (let [payload (.-payload (.-context github))]
     (if-let [pr (.-pull_request payload)]
       (loop [links (extract-details pr)]
         (when-let [{:keys [state] :as details} (first links)]
-          (let [link-pr-promise (wrike/link-pr details)]
-            (.then link-pr-promise
-                   (fn [link-pr-result]
-                     (.log js/console (str "Result of link-pr: " link-pr-result))
-                     (condp = state
-                       :draft link-pr-result
-                       :open (-> (wrike/progress-task details (core/getInput "opened"))
-                                 (.then
-                                  (fn [progress-result]
-                                    (.log js/console (str "Result of progress-task: " progress-result))
-                                    (js/Promise.resolve progress-result))))
-                       :merged (-> (wrike/complete-task details (core/getInput "merged"))
-                                   (.then
-                                    (fn [complete-result]
-                                      (.log js/console (str "Result of complete-task: " complete-result))
-                                      (js/Promise.resolve complete-result))))
-                       :closed (-> (wrike/cancel-task details (core/getInput "closed"))
-                                   (.then
-                                    (fn [cancel-result]
-                                      (.log js/console (str "Result of cancel-task: " cancel-result))
-                                      (js/Promise.resolve cancel-result))))
-                       :else (js/Promise.resolve)))))
+          (-> (case state
+                :draft
+                (wrike/link-pr details)
 
-          (.catch #(core/setFailed (.-message %)))
+                :open
+                (js/Promise.all
+                 [(wrike/link-pr details)
+                  (wrike/progress-task details (core/getInput "opened"))])
+
+                :merged
+                (wrike/complete-task details (core/getInput "merged"))
+
+                :closed
+                (wrike/cancel-task details (core/getInput "closed"))
+
+                ;; else ignore
+                (js/Promise.resolve))
+              (.catch #(core/setFailed (.-message %))))
           (recur (rest links))))
       (js/console.log "No pull_request in payload"))))
-
