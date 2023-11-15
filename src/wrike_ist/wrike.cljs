@@ -111,7 +111,7 @@
                         (reject (js/Error. "check-valid-task: Task not found in folder"))))))))
        (do
          (.info js/console "check-valid-task: PR is not targeted to release branch, returning success")
-         (resolve permalink))))))
+         (resolve true))))))
 
 (defn link-pr
   [{:keys [pr-url permalink target-branch] :as details}]
@@ -229,7 +229,9 @@
      (find-task permalink)
      #(update-task-status % {:wanted-status wanted-status
                              :wanted-group "Completed"}))
-    (.log js/console (str  "complete-task: Skipping `merged` transition because it's set to \"-\""))))
+    (do
+    (js/console.log "Skipping `merged` transition because it's set to \"-\"")
+    (js/Promise.resolve))))
 
 (defn cancel-task
   [{:keys [permalink]} wanted-status]
@@ -238,4 +240,6 @@
      (find-task permalink)
      #(update-task-status % {:wanted-status wanted-status
                              :wanted-group "Cancelled"}))
-    (.log js/console (str  "cancel-task: Skipping `closed` transition because it's set to \"-\""))))
+    (do
+    (js/console.log "Skipping `closed` transition because it's set to \"-\"")
+    (js/Promise.resolve))))
