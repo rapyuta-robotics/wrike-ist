@@ -136,13 +136,15 @@
                     (.log js/console (str  "link-pr: PR link sent to task"))
                     (js/Promise.resolve)))
                  (.catch
-                  #(js/Promise.reject (if (= % :present)
-                                        (str "link-pr: PR link already in comments")
-                                        %)))))))
+                  #(if (= % :present)
+                     (.log js/console (str  "link-pr: PR link already in comments"))
+                     (js/Promise.resolve %)))))))
         (.then
-         (fn [_] 
-           (.log js/console (str "check-valid-task-promise value: " check-valid-task-promise))
-           (js/Promise.all [check-valid-task-promise])))
+         (fn [_]
+           (js/Promise.all [check-valid-task-promise
+                            (.then check-valid-task-promise
+                                   (fn [result]
+                                     (.log js/console (str "check-valid-task-promise value: " result))))])))
         (.catch #(js/Promise.reject %)))))
 
 
