@@ -32,27 +32,31 @@
             :repository-name repository-name})
          links)))))
 
+(defn handle-link
+  [{:keys [state] :as details}]
+  (-> (case state
+        :draft
+        (wrike/link-pr details)
+        :open
+        (wrike/link-pr details)
+
+        ;; TODO: modify and enable when Wrike status' are simplified to a linear workflow.
+        ;; :open
+        ;; (js/Promise.all
+        ;;   [(wrike/link-pr details)
+        ;;   (wrike/progress-task details (core/getInput "opened"))])
+        ;; :merged
+        ;; (wrike/complete-task details (core/getInput "merged"))
+        ;; :closed
+        ;; (wrike/cancel-task details (core/getInput "closed"))
+        (js/Promise.resolve))
+      (.catch #(core/setFailed (.-message %)))))
+
 (defn main
   []
   (let [payload (.-payload (.-context github))]
     (if-let [pr (.-pull_request payload)]
-      (loop [links (extract-details pr)]
-        (when-let [{:keys [state] :as details} (first links)]
-          (-> (case state
-                :draft
-                (wrike/link-pr details)
-
-                :open
-                (wrike/link-pr details)
-
-                :merged
-                (wrike/complete-task details (core/getInput "merged"))
-
-                :closed
-                (wrike/cancel-task details (core/getInput "closed"))
-
-                ;; else ignore
-                (js/Promise.resolve))
-              (.catch #(core/setFailed (.-message %))))
-          (recur (rest links))))
+      (let [links (extract-details pr)]
+        (doseq [link links]
+          (handle-link link)))
       (js/console.log "No pull_request in payload"))))
