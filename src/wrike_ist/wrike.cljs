@@ -11,7 +11,7 @@
    {:Authorization (str "bearer " (wrike-token))
     :Content-Type "application/json"})
 
- (def folder-names ["98_issues" "02_sootballs_releases"])
+ (def folder-names ["98_issues" "02_sootballs_releases" "Sootballs Release"])
 
  (def link-badge
    (str "<span "
