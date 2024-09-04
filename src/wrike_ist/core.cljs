@@ -63,20 +63,20 @@
     (if-let [pr (.-pull_request payload)]
       (loop [links (extract-details pr)]
         (when-let [{:keys [state pr-url] :as details} (first links)]
-          (let [link-type (find-link-type pr-url)]
+          (let [link-type (find-link-type (first links))]
             (-> (case state
                   :draft
                   (case link-type
                     :wrike (wrike/link-pr details)
                     :azure (azure/link-pr details)
-                    :unknown (js/console.log (str "Unknown link type: " pr-url))
+                    :unknown (js/console.log (str "Unknown link type: " (first links)))
                     (js/Promise.resolve))
 
                   :open
                   (case link-type
                     :wrike (wrike/link-pr details)
                     :azure (azure/link-pr details)
-                    :unknown (js/console.log (str "Unknown link type: " pr-url))
+                    :unknown (js/console.log (str "Unknown link type: " (first links)))
                     (js/Promise.resolve))
 
                   ;; else ignore
