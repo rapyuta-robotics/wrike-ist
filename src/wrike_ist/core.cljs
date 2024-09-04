@@ -46,7 +46,7 @@
     (if-let [pr (.-pull_request payload)]
       (loop [links (extract-details pr)]
         (when-let [{:keys [state pr-url permalink] :as details} (first links)]
-          (let [link-type (find-link-type (first permalink))]
+          (let [link-type (find-link-type permalink)]
             (-> (case state
                   :draft
                   (case link-type
