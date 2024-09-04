@@ -45,8 +45,8 @@
   (let [payload (.-payload (.-context github))]
     (if-let [pr (.-pull_request payload)]
       (loop [links (extract-details pr)]
-        (when-let [{:keys [state pr-url] :as details} (first links)]
-          (let [link-type (find-link-type (first links))]
+        (when-let [{:keys [state pr-url permalink] :as details} (first links)]
+          (let [link-type (find-link-type (first permalink))]
             (-> (case state
                   :draft
                   (case link-type
