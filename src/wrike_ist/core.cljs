@@ -1,11 +1,18 @@
 (ns wrike-ist.core
   (:require ["@actions/core" :as core]
             ["@actions/github" :as github]
-            [wrike-ist.wrike :as wrike]))
+            [wrike-ist.wrike :as wrike]
+            [wrike-ist.azure :as azure]))
 
 (defn find-links
   [text]
-  (not-empty (re-seq #"\bhttps://www\.wrike\.com/open\.htm\?id=\d+\b" text)))
+  (not-empty (re-seq #"\bhttps://dev\.azure\.com/[^/]+/[^/]+/_workitems/edit/\d+\b" text)))
+;; (defn find-links
+;;   [text]
+;;   (let [wrike-pattern #"\bhttps://www\.wrike\.com/open\.htm\?id=\d+\b"
+;;         azure-pattern #"\bhttps://dev\.azure\.com/[^/]+/[^/]+/_workitems/edit/\d+\b"
+;;         combined-pattern (re-pattern (str wrike-pattern "|" azure-pattern))]
+;;     (not-empty (re-seq combined-pattern text))))
 
 (defn extract-details
   [pr-obj]
@@ -40,16 +47,10 @@
         (when-let [{:keys [state] :as details} (first links)]
           (-> (case state
                 :draft
-                (wrike/link-pr details)
+                (azure/link-pr details)
 
                 :open
-                (wrike/link-pr details)
-
-                :merged
-                (wrike/complete-task details (core/getInput "merged"))
-
-                :closed
-                (wrike/cancel-task details (core/getInput "closed"))
+                (azure/link-pr details)
 
                 ;; else ignore
                 (js/Promise.resolve))

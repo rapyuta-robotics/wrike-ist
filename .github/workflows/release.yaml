@@ -13,6 +13,7 @@ jobs:
       - name: wrike-ist
         env:
           WRIKE_TOKEN: ${{ secrets.WRIKE_TOKEN }}
+          AZURE_TOKEN: ${{ secrets.AZURE_TOKEN }}
         uses: ./
         with:
           opened: "In review"
