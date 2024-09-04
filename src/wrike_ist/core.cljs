@@ -52,14 +52,14 @@
                   (case link-type
                     :wrike (wrike/link-pr details)
                     :azure (azure/link-pr details)
-                    :unknown (js/console.log (str "Unknown link type: " (first links)))
+                    :unknown (js/console.log (str "Unknown link type: " permalink))
                     (js/Promise.resolve))
 
                   :open
                   (case link-type
                     :wrike (wrike/link-pr details)
                     :azure (azure/link-pr details)
-                    :unknown (js/console.log (str "Unknown link type: " (first links)))
+                    :unknown (js/console.log (str "Unknown link type: " permalink))
                     (js/Promise.resolve))
 
                   ;; else ignore
