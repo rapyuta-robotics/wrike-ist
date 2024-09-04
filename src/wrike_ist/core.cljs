@@ -4,27 +4,9 @@
             [wrike-ist.wrike :as wrike]
             [wrike-ist.azure :as azure]))
 
-;; (defn find-links
-;;   [text]
-;;   (not-empty (re-seq #"\bhttps://dev\.azure\.com/[^/]+/[^/]+/_workitems/edit/\d+\b" text)))
-
 (defn find-links
   [text]
-  (let [wrike-pattern #"\bhttps://www\.wrike\.com/open\.htm\?id=\d+\b"
-        azure-pattern #"\bhttps://dev\.azure\.com/[^/]+/[^/]+/_workitems/edit/\d+\b"
-        wrike-matches (re-seq wrike-pattern text)
-        azure-matches (re-seq azure-pattern text)]
-    (do
-      ;; Print debug information
-      (js/console.log "Wrike Matches Found:" (first wrike-matches))
-      (js/console.log "Azure Matches Found:" (first azure-matches))
-      
-      ;; Combine results
-      (let [all-matches (concat (or wrike-matches []) (or azure-matches []))]
-        (if (seq all-matches)
-          (js/console.log "Matching links found:" all-matches)
-          all-matches
-          (js/console.log "No matching links found"))))))
+  (not-empty (re-seq #"\bhttps://www\.wrike\.com/open\.htm\?id=\d+\b|\bhttps://dev\.azure\.com/[^/]+/[^/]+/_workitems/edit/\d+\b" text)))
 
 (defn extract-details
   [pr-obj]

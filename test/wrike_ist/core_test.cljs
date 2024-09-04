@@ -11,7 +11,7 @@
       (is (= (list url) (find-links (str "a\n" url "\nb"))))))
   (testing "Multiple links in text"
     (let [url-1 "https://dev.azure.com/organization/project/_workitems/edit/1"
-          url-2 "https://dev.azure.com/organization/project/_workitems/edit/2"]
+          url-2 "https://www.wrike.com/open.htm?id=2"]
       (is (= (list url-1 url-2) (find-links (str url-1 "\nfoo: " url-2 "\n"))))))
   (testing "No separator around the link"
     ;; anything \b matches will do
@@ -36,7 +36,7 @@
         (is (= url (:permalink (first (extract-details payload)))))))
     (testing "Multiple links"
       (let [url-1 "https://dev.azure.com/organization/project/_workitems/edit/1"
-            url-2 "https://dev.azure.com/organization/project/_workitems/edit/2"
+            url-2 "https://www.wrike.com/open.htm?id=2"
             payload (clj->js {:body (str "a\n" url-1 "\nb " url-2)
                               :base (clj->js {:ref "feature-branch"})
                               :head (clj->js {:repo (clj->js {:name "your-repo-name"})})})]
