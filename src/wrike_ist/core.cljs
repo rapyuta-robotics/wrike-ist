@@ -7,18 +7,29 @@
 ;; (defn find-links
 ;;   [text]
 ;;   (not-empty (re-seq #"\bhttps://dev\.azure\.com/[^/]+/[^/]+/_workitems/edit/\d+\b" text)))
+;; (defn find-links
+;;   [text]
+;;   (let [wrike-pattern #"\bhttps://www\.wrike\.com/open\.htm\?id=\d+\b"
+;;         azure-pattern #"\bhttps://dev\.azure\.com/[^/]+/[^/]+/_workitems/edit/\d+\b"
+;;         combined-pattern (re-pattern (str wrike-pattern "|" azure-pattern))]
 (defn find-links
   [text]
   (let [wrike-pattern #"\bhttps://www\.wrike\.com/open\.htm\?id=\d+\b"
         azure-pattern #"\bhttps://dev\.azure\.com/[^/]+/[^/]+/_workitems/edit/\d+\b"
-        combined-pattern (re-pattern (str wrike-pattern "|" azure-pattern))]
-    (let [matches (re-seq combined-pattern text)]
-      (do
-        (js/console.log "Combined Pattern:" combined-pattern)
-        (js/console.log "Text to Search:" text)
-        (js/console.log "Matches Found:" matches)
-        (if (seq matches)
-          (distinct matches)
+        wrike-matches (re-seq wrike-pattern text)
+        azure-matches (re-seq azure-pattern text)]
+    (do
+      ;; Print debug information
+      (js/console.log "Wrike Pattern:" wrike-pattern)
+      (js/console.log "Azure Pattern:" azure-pattern)
+      (js/console.log "Text to Search:" text)
+      (js/console.log "Wrike Matches Found:" wrike-matches)
+      (js/console.log "Azure Matches Found:" azure-matches)
+      
+      ;; Combine results
+      (let [all-matches (concat (or wrike-matches []) (or azure-matches []))]
+        (if (seq all-matches)
+          all-matches
           (js/console.log "No matching links found"))))))
 
 (defn extract-details
@@ -49,8 +60,8 @@
 (defn find-link-type
   [url]
   (cond
-    (re-find #"https://www\.wrike\.com/open\.htm\?id=\d+" url) :wrike
-    (re-find #"https://dev\.azure\.com/[^/]+/[^/]+/_workitems/edit/\d+" url) :azure
+    (re-find #"\bhttps://www\.wrike\.com/open\.htm\?id=\d+\b" url) :wrike
+    (re-find #"\bhttps://dev\.azure\.com/[^/]+/[^/]+/_workitems/edit/\d+\b" url) :azure
     :else :unknown))
 
 (defn main
