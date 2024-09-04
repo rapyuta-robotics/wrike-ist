@@ -10,16 +10,26 @@
 (defn find-links
   [text]
   (let [wrike-pattern #"https://www\.wrike\.com/open\.htm\?id=\d+"
-        azure-pattern #"https://dev\.azure\.com/[^/]+/[^/]+/_workitems/edit/\d+"
-        combined-pattern (re-pattern (str wrike-pattern "|" azure-pattern))]
-    (let [matches (re-seq combined-pattern text)]
+        azure-pattern #"https://dev\.azure\.com/[^/]+/[^/]+/_workitems/edit/\d+"]
+    (let [wrike-matches (re-seq wrike-pattern text)
+          azure-matches (re-seq azure-pattern text)]
       (do
-        (js/console.log "Combined Pattern:" combined-pattern)
+        ;; Print debug information
+        (js/console.log "Wrike Pattern:" wrike-pattern)
+        (js/console.log "Azure Pattern:" azure-pattern)
         (js/console.log "Text to Search:" text)
-        (js/console.log "Matches Found:" matches)
-        (if (seq matches)
-          (distinct matches)
-          (js/console.log "No matching links found"))))))
+        (js/console.log "Wrike Matches Found:" wrike-matches)
+        (js/console.log "Azure Matches Found:" azure-matches)
+        
+        ;; Combine results
+        (cond
+          (seq wrike-matches) wrike-matches
+          (seq azure-matches) azure-matches
+          :else (js/console.log "No matching links found"))))))
+
+;; Example usage
+(find-links "Here are some links: https://www.wrike.com/open.htm?id=123456 and https://dev.azure.com/organization/project/_workitems/edit/98765")
+
 
 (defn extract-details
   [pr-obj]
