@@ -9,10 +9,13 @@
 ;;   (not-empty (re-seq #"\bhttps://dev\.azure\.com/[^/]+/[^/]+/_workitems/edit/\d+\b" text)))
 (defn find-links
   [text]
-  (let [wrike-pattern #"\bhttps://www\.wrike\.com/open\.htm\?id=\d+\b"
-        azure-pattern #"\bhttps://dev\.azure\.com/[^/]+/[^/]+/_workitems/edit/\d+\b"
+  (let [wrike-pattern #"https://www\.wrike\.com/open\.htm\?id=\d+"
+        azure-pattern #"https://dev\.azure\.com/[^/]+/[^/]+/_workitems/edit/\d+"
         combined-pattern (re-pattern (str wrike-pattern "|" azure-pattern))]
-    (not-empty (re-seq combined-pattern text))))
+    (let [matches (re-seq combined-pattern text)]
+      (if (seq matches)
+        (distinct matches)
+        (js/console.log "No matching links found")))))
 
 (defn extract-details
   [pr-obj]
