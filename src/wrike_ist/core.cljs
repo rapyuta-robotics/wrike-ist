@@ -22,6 +22,7 @@
       ;; Combine results
       (let [all-matches (concat (or wrike-matches []) (or azure-matches []))]
         (if (seq all-matches)
+          (js/console.log "Matching links found:" all-matches)
           all-matches
           (js/console.log "No matching links found"))))))
 
