@@ -7,11 +7,7 @@
 ;; (defn find-links
 ;;   [text]
 ;;   (not-empty (re-seq #"\bhttps://dev\.azure\.com/[^/]+/[^/]+/_workitems/edit/\d+\b" text)))
-;; (defn find-links
-;;   [text]
-;;   (let [wrike-pattern #"\bhttps://www\.wrike\.com/open\.htm\?id=\d+\b"
-;;         azure-pattern #"\bhttps://dev\.azure\.com/[^/]+/[^/]+/_workitems/edit/\d+\b"
-;;         combined-pattern (re-pattern (str wrike-pattern "|" azure-pattern))]
+
 (defn find-links
   [text]
   (let [wrike-pattern #"\bhttps://www\.wrike\.com/open\.htm\?id=\d+\b"
@@ -20,11 +16,8 @@
         azure-matches (re-seq azure-pattern text)]
     (do
       ;; Print debug information
-      (js/console.log "Wrike Pattern:" wrike-pattern)
-      (js/console.log "Azure Pattern:" azure-pattern)
-      (js/console.log "Text to Search:" text)
-      (js/console.log "Wrike Matches Found:" wrike-matches)
-      (js/console.log "Azure Matches Found:" azure-matches)
+      (js/console.log "Wrike Matches Found:" (first wrike-matches))
+      (js/console.log "Azure Matches Found:" (first azure-matches))
       
       ;; Combine results
       (let [all-matches (concat (or wrike-matches []) (or azure-matches []))]
@@ -76,12 +69,14 @@
                   (case link-type
                     :wrike (wrike/link-pr details)
                     :azure (azure/link-pr details)
+                    :unknown (js/console.log (str "Unknown link type: " pr-url))
                     (js/Promise.resolve))
 
                   :open
                   (case link-type
                     :wrike (wrike/link-pr details)
                     :azure (azure/link-pr details)
+                    :unknown (js/console.log (str "Unknown link type: " pr-url))
                     (js/Promise.resolve))
 
                   ;; else ignore
