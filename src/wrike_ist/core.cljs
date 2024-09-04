@@ -13,9 +13,13 @@
         azure-pattern #"https://dev\.azure\.com/[^/]+/[^/]+/_workitems/edit/\d+"
         combined-pattern (re-pattern (str wrike-pattern "|" azure-pattern))]
     (let [matches (re-seq combined-pattern text)]
-      (if (seq matches)
-        (distinct matches)
-        (js/console.log "No matching links found")))))
+      (do
+        (js/console.log "Combined Pattern:" combined-pattern)
+        (js/console.log "Text to Search:" text)
+        (js/console.log "Matches Found:" matches)
+        (if (seq matches)
+          (distinct matches)
+          (js/console.log "No matching links found"))))))
 
 (defn extract-details
   [pr-obj]
