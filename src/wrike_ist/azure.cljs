@@ -1,11 +1,6 @@
 (ns wrike-ist.azure
   (:require [httpurr.client.node :as http]
             [clojure.string :as str]))
-
-;; Define the variables
-(def ^:private organization "rapyuta-robotics") ; Replace with your organization name
-(def ^:private project "sootballs") ; Replace with your project name
-
 (defn- azure-token []
   (some-> js/process .-env .-AZURE_TOKEN .trim))
 
@@ -25,27 +20,29 @@
 
 (defn find-task
   [url]
-  (let [pattern #"https://dev\.azure\.com/[^/]+/[^/]+/_workitems/edit/(\d+)"
+  (let [pattern #"https://dev\.azure\.com/([^/]+)/([^/]+)/_workitems/edit/(\d+)"
         matches (re-seq pattern url)]
     (js/Promise.
      (fn [resolve reject]
        (if (seq matches)
-         (resolve (-> (first matches) (second) (js/parseInt)))
+         (let [[_ organization project task-id] (first matches)]
+           (resolve {:organization organization
+                     :project project
+                     :task-id (js/parseInt task-id)}))
          (reject (js/Error. "No task ID found")))))))
-
 
 (defn link-pr
   [{:keys [pr-url permalink] :as details}]
   (.then
    (find-task permalink)
-   (fn [id]
-       (js/console.log (str "link-pr: Found task ID:" id))
+   (fn [{:keys [organization project task-id]}]
+       (js/console.log (str "link-pr: Found organization:" organization " project:" project " task-id:" task-id))
        (js/console.log (str "headers:" (headers)))
-       (let [uri (str "https://dev.azure.com/" organization "/" project "/_apis/wit/workitems/" id "/comments?api-version=7.0-preview.3")]
-         (js/console.log (str "uri:" uri))
+       (let [uri (str "https://dev.azure.com/" organization "/" project "/_apis/wit/workitems/" task-id "/comments?api-version=7.0-preview.3")]
+        ;;  (js/console.log (str "uri:" uri))
          (-> (http/get uri {:headers (headers)})
              (.then (fn find-existing-link [response]
-                      (js/console.log (str "find-existing-link: response:" response))
+                    ;;   (js/console.log (str "find-existing-link: response:" response))
                       (reduce
                        (fn [ok comment]
                          (if (.includes (get comment "text") pr-url)

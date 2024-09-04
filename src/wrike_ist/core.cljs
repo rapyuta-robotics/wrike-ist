@@ -4,15 +4,15 @@
             [wrike-ist.wrike :as wrike]
             [wrike-ist.azure :as azure]))
 
-(defn find-links
-  [text]
-  (not-empty (re-seq #"\bhttps://dev\.azure\.com/[^/]+/[^/]+/_workitems/edit/\d+\b" text)))
 ;; (defn find-links
 ;;   [text]
-;;   (let [wrike-pattern #"\bhttps://www\.wrike\.com/open\.htm\?id=\d+\b"
-;;         azure-pattern #"\bhttps://dev\.azure\.com/[^/]+/[^/]+/_workitems/edit/\d+\b"
-;;         combined-pattern (re-pattern (str wrike-pattern "|" azure-pattern))]
-;;     (not-empty (re-seq combined-pattern text))))
+;;   (not-empty (re-seq #"\bhttps://dev\.azure\.com/[^/]+/[^/]+/_workitems/edit/\d+\b" text)))
+(defn find-links
+  [text]
+  (let [wrike-pattern #"\bhttps://www\.wrike\.com/open\.htm\?id=\d+\b"
+        azure-pattern #"\bhttps://dev\.azure\.com/[^/]+/[^/]+/_workitems/edit/\d+\b"
+        combined-pattern (re-pattern (str wrike-pattern "|" azure-pattern))]
+    (not-empty (re-seq combined-pattern text))))
 
 (defn extract-details
   [pr-obj]
@@ -39,21 +39,35 @@
             :repository-name repository-name})
          links)))))
 
+(defn find-link-type
+  [url]
+  (cond
+    (re-find #"https://www\.wrike\.com/open\.htm\?id=\d+" url) :wrike
+    (re-find #"https://dev\.azure\.com/[^/]+/[^/]+/_workitems/edit/\d+" url) :azure
+    :else :unknown))
+
 (defn main
   []
   (let [payload (.-payload (.-context github))]
     (if-let [pr (.-pull_request payload)]
       (loop [links (extract-details pr)]
-        (when-let [{:keys [state] :as details} (first links)]
-          (-> (case state
-                :draft
-                (azure/link-pr details)
+        (when-let [{:keys [state pr-url] :as details} (first links)]
+          (let [link-type (find-link-type pr-url)]
+            (-> (case state
+                  :draft
+                  (case link-type
+                    :wrike (wrike/link-pr details)
+                    :azure (azure/link-pr details)
+                    (js/Promise.resolve))
 
-                :open
-                (azure/link-pr details)
+                  :open
+                  (case link-type
+                    :wrike (wrike/link-pr details)
+                    :azure (azure/link-pr details)
+                    (js/Promise.resolve))
 
-                ;; else ignore
-                (js/Promise.resolve))
-              (.catch #(core/setFailed (.-message %))))
+                  ;; else ignore
+                  (js/Promise.resolve))
+              (.catch #(core/setFailed (.-message %)))))
           (recur (rest links))))
       (js/console.log "No pull_request in payload"))))
