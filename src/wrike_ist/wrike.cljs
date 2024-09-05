@@ -115,8 +115,7 @@
 
 (defn link-pr
   [{:keys [pr-url permalink target-branch] :as details}]
-  (let [check-valid-task-promise (check-valid-task permalink target-branch)]
-    (-> (find-task permalink)
+    (find-task permalink)
         (.then
          (fn [{:strs [id]}]
            (let [uri (str "https://www.wrike.com/api/v4/tasks/" id "/comments")]
@@ -144,17 +143,7 @@
                  (.catch
                   #(if (= % :present)
                      (.log js/console (str  "link-pr: PR link already in comments"))
-                     (js/Promise.resolve %)))))))
-        (.then
-         (fn [_]
-           (js/Promise.all [check-valid-task-promise
-                            (.then check-valid-task-promise
-                                   (fn [result]
-                                     (.log js/console (str "check-valid-task-promise value: " result))))])))
-        (.catch
-         #(do
-            (.log js/console (str "link-pr: Rejected with reason: " %))
-            (js/Promise.reject %))))))
+                     (js/Promise.resolve %))))))))
 
 
 
