@@ -1,11 +1,12 @@
 (ns wrike-ist.core
   (:require ["@actions/core" :as core]
             ["@actions/github" :as github]
-            [wrike-ist.wrike :as wrike]))
+            [wrike-ist.wrike :as wrike]
+            [wrike-ist.azure :as azure]))
 
 (defn find-links
   [text]
-  (not-empty (re-seq #"\bhttps://www\.wrike\.com/open\.htm\?id=\d+\b" text)))
+  (not-empty (re-seq #"\bhttps://www\.wrike\.com/open\.htm\?id=\d+\b|\bhttps://dev\.azure\.com/[^/]+/[^/]+/_workitems/edit/\d+\b" text)))
 
 (defn extract-details
   [pr-obj]
@@ -32,27 +33,37 @@
             :repository-name repository-name})
          links)))))
 
+(defn find-link-type
+  [url]
+  (cond
+    (re-find #"\bhttps://www\.wrike\.com/open\.htm\?id=\d+\b" url) :wrike
+    (re-find #"\bhttps://dev\.azure\.com/[^/]+/[^/]+/_workitems/edit/\d+\b" url) :azure
+    :else :unknown))
+
 (defn main
   []
   (let [payload (.-payload (.-context github))]
     (if-let [pr (.-pull_request payload)]
       (loop [links (extract-details pr)]
-        (when-let [{:keys [state] :as details} (first links)]
-          (-> (case state
-                :draft
-                (wrike/link-pr details)
+        (when-let [{:keys [state pr-url permalink] :as details} (first links)]
+          (let [link-type (find-link-type permalink)]
+            (-> (case state
+                  :draft
+                  (case link-type
+                    :wrike (wrike/link-pr details)
+                    :azure (azure/link-pr details)
+                    :unknown (js/console.log (str "Unknown link type: " permalink))
+                    (js/Promise.resolve))
 
-                :open
-                (wrike/link-pr details)
+                  :open
+                  (case link-type
+                    :wrike (wrike/link-pr details)
+                    :azure (azure/link-pr details)
+                    :unknown (js/console.log (str "Unknown link type: " permalink))
+                    (js/Promise.resolve))
 
-                :merged
-                (wrike/complete-task details (core/getInput "merged"))
-
-                :closed
-                (wrike/cancel-task details (core/getInput "closed"))
-
-                ;; else ignore
-                (js/Promise.resolve))
-              (.catch #(core/setFailed (.-message %))))
+                  ;; else ignore
+                  (js/Promise.resolve))
+              (.catch #(core/setFailed (.-message %)))))
           (recur (rest links))))
       (js/console.log "No pull_request in payload"))))

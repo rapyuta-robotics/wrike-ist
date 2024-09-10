@@ -114,15 +114,13 @@
          (resolve true))))))
 
 (defn link-pr
-  [{:keys [pr-url permalink target-branch] :as details}]
-  (let [check-valid-task-promise (check-valid-task permalink target-branch)]
-    (-> (find-task permalink)
-        (.then
-         (fn [{:strs [id]}]
-           (let [uri (str "https://www.wrike.com/api/v4/tasks/" id "/comments")]
-             (-> (http/get uri {:headers (headers)})
-                 (.then
-                  (fn find-existing-link [response]
+  [{:keys [pr-url permalink] :as details}]
+  (.then
+   (find-task permalink)
+   (fn [{:strs [id]}]
+     (let [uri (str "https://www.wrike.com/api/v4/tasks/" id "/comments")]
+       (-> (http/get uri {:headers (headers)})
+           (.then (fn find-existing-link [response]
                     (reduce
                      (fn [ok comment]
                        (if (.includes (get comment "text") pr-url)
@@ -130,32 +128,16 @@
                          ok))
                      (js/Promise.resolve)
                      (get (parse-body response) "data"))))
-                 (.then
-                  (fn add-link-comment [& _]
+           (.then (fn add-link-comment [& _]
                     (let [comment-text (link-html details)
                           params (clj->js {:text comment-text
                                            :plainText false})]
                       (http/post uri {:headers (headers)
                                       :body (js/JSON.stringify params)}))))
-                 (.then
-                  (fn [_]
-                    (.log js/console (str  "link-pr: PR link sent to task"))
-                    (js/Promise.resolve)))
-                 (.catch
-                  #(if (= % :present)
-                     (.log js/console (str  "link-pr: PR link already in comments"))
-                     (js/Promise.resolve %)))))))
-        (.then
-         (fn [_]
-           (js/Promise.all [check-valid-task-promise
-                            (.then check-valid-task-promise
-                                   (fn [result]
-                                     (.log js/console (str "check-valid-task-promise value: " result))))])))
-        (.catch
-         #(do
-            (.log js/console (str "link-pr: Rejected with reason: " %))
-            (js/Promise.reject %))))))
-
+           (.then #(js/console.log "PR link sent to task"))
+           (.catch #(if (= % :present)
+                      (js/console.log "PR link already in comments")
+                      (js/Promise.reject %))))))))
 
 
 (defn folder-statuses

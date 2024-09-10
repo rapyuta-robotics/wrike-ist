@@ -1,7 +1,7 @@
 {
   "name": "wrike-ist",
-  "version": "1.6.3",
-  "description": "GitHub Action for Wrike automation",
+  "version": "1.6.4",
+  "description": "GitHub Action for Wrike and Azure automation",
   "main": "resources/main.js",
   "scripts": {
     "build": "shadow-cljs compile main",

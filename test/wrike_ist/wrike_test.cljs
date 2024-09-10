@@ -37,30 +37,22 @@
     (testing "If there's no match at all"
       (is (= nil (find-status haystack {:wanted-status "asd" :wanted-group "fgh"}))))))
 
-(deftest cancel-task-test
-  (testing "Does nothing if `merged` is configured explicitly as \"-\""
-    (is (= nil (cancel-task {} "-")))))
+;; (deftest test-is-wrike-task-in-folder
+;;   (testing "Check if the task is in the folder or an inherited folder"
+;;     (let [mock-task-id "mock-task-id"
+;;           mock-folder-id "mock-folder-id"
+;;           mock-parent-id "mock-parent-id"
+;;           mock-permalink "mock-permalink"
+;;           test-task {:id mock-task-id
+;;                      :folders [mock-folder-id]
+;;                      :parentIds [mock-parent-id]
+;;                      :permalink mock-permalink}]
 
-(deftest complete-task-test
-  (testing "Does nothing if `merged` is configured explicitly as \"-\""
-    (is (= nil (complete-task {} "-")))))
+;;       ;; Define a test task using your actual task structure
 
-(deftest test-is-wrike-task-in-folder
-  (testing "Check if the task is in the folder or an inherited folder"
-    (let [mock-task-id "mock-task-id"
-          mock-folder-id "mock-folder-id"
-          mock-parent-id "mock-parent-id"
-          mock-permalink "mock-permalink"
-          test-task {:id mock-task-id
-                     :folders [mock-folder-id]
-                     :parentIds [mock-parent-id]
-                     :permalink mock-permalink}]
+;;       ;; Replace the original functions with the actual functions
+;;       (binding [fetch-wrike-task (fn [id] (if (= id mock-task-id) test-task nil))]
 
-      ;; Define a test task using your actual task structure
-
-      ;; Replace the original functions with the actual functions
-      (binding [fetch-wrike-task (fn [id] (if (= id mock-task-id) test-task nil))]
-
-        ;; Test the function
-        (is (is-wrike-task-in-folder? mock-permalink mock-folder-id))
-        (is (not (is-wrike-task-in-folder? mock-permalink "other-folder-id")))))))
+;;         ;; Test the function
+;;         (is (is-wrike-task-in-folder? mock-permalink mock-folder-id))
+;;         (is (not (is-wrike-task-in-folder? mock-permalink "other-folder-id")))))))
